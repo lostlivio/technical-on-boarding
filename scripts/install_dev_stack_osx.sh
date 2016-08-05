@@ -108,6 +108,12 @@ echo
 echo "Installing Python packages..."
 echo
 pip install cql   # cql is used to connect to cassandra
+pip install ansible==2.0.0.2
+pip install awscli==1.10.4
+pip install boto==2.39.0
+pip install paramiko==2.0.0
+pip install cffi==1.5.0
+
 
 brew doctor  # The installs can expose issues that weren't originally exposed in the original check. Run it again.
 new_brew_errors=$(brew doctor 2>&1 | grep -c "Warning")
