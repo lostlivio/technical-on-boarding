@@ -12,6 +12,8 @@ echo "*                                                                         
 echo "* Installing the Samsung Stack for OSX.                                        *"
 echo "*                                                                              *"
 echo "* Before you start:                                                            *"
+echo "* if you have not done so yet, please install XCODE then run                   *"
+echo "*  'xcode-select --install' for command line tools.                            *"
 echo "*                                                                              *"
 echo "********************************************************************************"
 echo
@@ -27,6 +29,26 @@ if test -z "${install_dir}";
 then
     # If we just read a 0-length string, use the default install directory.
     install_dir="${default_install_dir}"
+fi
+echo
+
+# Ask github username/email
+echo
+echo ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Step $((step_counter++)) <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<"
+echo
+read -ep "Enter user name to be used in GitHub contributions: " -r user_name
+if test -z "${user_name}";
+then
+    echo " Manually configure on a later date."
+    user_name= ""
+fi
+echo
+
+read -ep "Enter user name to be used in GitHub contributions: " -r user_email
+if test -z "${user_email}";
+then
+    echo " Manually configure on a later date."
+    user_email=""
 fi
 echo
 
@@ -92,6 +114,31 @@ brew install wget
 brew install ag
 # git
 brew install git
+brew install hub
+
+echo "* It is recommended you create an ssh key to make github interactions much easier."
+if [ -z "$user_name" ]
+then
+  echo 'manually configure user.name at a later date'
+else 
+  git config --global user.name user_name
+fi
+
+if [ -z "$user_email" ]
+then
+  echo 'manually configure user.email at a later date'
+else
+  git config --global user.email user_email
+fi
+
+git config --global core.excludesfile $HOME/.gitignore
+echo 'eval "$(hub alias -s)"' >> ~/.bash_profile; source ~/.bash_profile
+echo "export GIT_PS1_SHOWDIRTYSTATE=true" >> ~/.bash_profile # show unstaged (*) and staged (+)
+echo "export GIT_PS1_SHOWUNTRACKEDFILES=true" >> ~/.bash_profile # show untracked (%)
+echo "export PS1='\u@\h:\w\$(__git_ps1)\$ '" >> ~/.bash_profile # eg: user@host:dir (branch*+%)$ type here
+
+echo 'please verify when complete that you can clone from github.'
+
 # python and pip
 brew install python && sudo easy_install pip
 # ruby
