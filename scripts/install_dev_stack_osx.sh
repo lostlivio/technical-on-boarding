@@ -174,45 +174,6 @@ tar xzf terraform-provider-coreosbox.tar.gz && rm terraform-provider-coreosbox.t
 echo 'export PATH=$HOME/bin:PATH' >> $bash_profile
 
 
-
-# Change to the install directory and clone the required repositories.
-echo
-echo ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Step $((step_counter++)) <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<"
-echo
-echo "Cloning git repositories..."
-echo
-
-abort() {
-    echo "$@"
-    exit 1
-}
-
-cd_or_abort() {
-  # shellcheck disable=SC2164
-  maybe_error=$(cd "${install_dir}/$1")
-  $? || abort "${maybe_error}"
-}
-
-clone() {
-  cd_or_abort # into install_dir
-  local dir="${1}"
-  local repo="${2}"
-  if [ ! -d "${install_dir}/${dir}" ]; then
-    git clone "${repo}" || { echo "Failed to clone ${2}. Have you installed your public key?"; exit; }
-  else
-    cd_or_abort "${dir}"
-    git pull --ff-only
-  fi
-}
-
-# Samsung-cnct repos
-clone kraken https://github.com/samsung-cnct/kraken.git
-clone kraken-ci https://github.com/samsung-cnct/kraken-ci.git
-clone kubernetes https://github.com/samsung-cnct/kubernetes.git
-clone cassandra-container https://github.com/samsung-cnct/cassandra-container.git
-clone terraform-provider-coreosver https://github.com/samsung-cnct/terraform-provider-coreosver
-clone terraform-provider-execute https://github.com/samsung-cnct/terraform-provider-execute.git
-
 # Initialize boot2docker
 echo
 echo ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Step $((step_counter++)) <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<"
@@ -232,7 +193,10 @@ echo '* FINISHED!                                                               
 echo '*                                                                              *'
 echo '* The Samsung Stack should now be installed                                    *'
 echo '*                                                                              *'
-echo '*                                                                              *'
+echo '* please read github page on contributing, here we fork a projec               *'
+echo '*  and not contribute directly via a branch                                     *'
 echo '********************************************************************************'
 
-open https://github.com/
+
+open https://guides.github.com/activities/contributing-to-open-source/
+
