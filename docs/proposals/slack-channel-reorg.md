@@ -56,7 +56,7 @@ I am able to see 35 existing non-archived channels.  There may be some private c
 ## prior art
 
   - https://get.slack.help/hc/en-us/articles/217626408-Organize-and-name-channels
-  - https://get.slack.help/hc/en-us/articles/217626408-Organize-and-name-channels
+  - http://randsinrepose.com/archives/shaping-your-slack/
 
 # Proposal
 
