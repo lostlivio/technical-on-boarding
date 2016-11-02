@@ -98,7 +98,7 @@ I am able to see 35 existing non-archived channels.  There may be some private c
 | #general | #sds-general | new name |
 | #github-notification | #ping-github | new name |
 | #golang | archive | head to #cnct-dev, move notifications to ping- or team- channel |
-| #google-contrib | #cnct-community | new name |
+| #google-contrib | #cnct-opensource-meetings | new name |
 | #helm | archive | no recent activity, head to #cnct-dev |
 | #intel | archive | no recent activity |
 | #interviews | #cnct-interviews | only logistics, no candidate feedback |
@@ -120,6 +120,8 @@ I am able to see 35 existing non-archived channels.  There may be some private c
 | #visiting-engineers | #cnct-onboarding | how about for all new people vs. interns/visits? |
 | #weekly-summaries | archive | no recent activity |
 | #zonar | #team-zonar | new name |
+| n / a | #office-sanjose | why should seattle have all the fun |
+| n / a | #cnct-announce | new channel, keep this tightly groomed, relax our standards for #general and allow it to watercooler |
 
 ## results
 
