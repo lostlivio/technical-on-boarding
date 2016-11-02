@@ -73,12 +73,14 @@ I am able to see 35 existing non-archived channels.  There may be some private c
   - sds-prefixed channels for general chat (contractors, non-cnct folk welcome)
   - cnct-prefixed channels for cnct-specific chat
   - team-prefixed channels for long-term project / engagement teams
+  - proj-prefixed channels for short-term projects / engagements
+    - one-off channels that have lived for more than two months get renamed with this prefix
+    - presentation prep
+    - engaging a client but no formal SOW
+    - outside collaboration
   - ping-prefixed channels for notifications
   - office-prefixed channels for administrivia
   - all else is one-off and permitted
-    - channels for presentation prep
-    - outside collaboration
-    - etc
   - address channel proliferation with regular curation
   
 ## migration
@@ -158,8 +160,7 @@ I am able to see 35 existing non-archived channels.  There may be some private c
 ## curation
 
   - channels will get curated / archived monthly
-    - if it's been inactive for the month, and nobody is vouching for it, archive
-    - if it's been around for two months, and remains active, find a prefix for it
+    - if it's been inactive for the month, regardless of prefix, and nobody is vouching for it, archive
+    - if it's a one-off, has been around for two months, and remains active, it should probably have a proj- prefix
   - if we are happy with this policy, let's try automating it after a manual attempt or two
-
-
+  - if we are happy with this policy, and find we're not using our other slack instances (eg: team-coho, kraken, etc) we should consider killing them off in a follow-on proposal
