@@ -218,7 +218,7 @@ wget -O terraform-provider-coreosbox.tar.gz https://github.com/samsung-cnct/terr
 unzip terraform.zip && rm terraform.zip
 tar xzf terraform-provider-coreosbox.tar.gz && rm terraform-provider-coreosbox.tar.gz
 
-echo 'export PATH=$HOME/bin:PATH' >> $bash_profile
+echo 'export PATH=$HOME/bin:$PATH' >> $bash_profile
 
 
 # Initialize boot2docker
