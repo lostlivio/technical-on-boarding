@@ -7,16 +7,20 @@ We use Slack for the bulk of our collaboration.  Come join us at samsung-cnct.sl
 The goal here isn't to enforce strict rigid rules, but to codify 80% of what we use slack for with preventing the other 20%.
 
 1. We use prefixes to denote long-term channels as "official"
-  - `sds`-prefixed channels for general chat
   - `cnct`-prefixed channels for cnct-specific chat
   - `team`-prefixed channels for long-term project / engagement teams
   - `proj`-prefixed channels for short-term project / engagements
   - `ping`-prefixed channels for notifications
-  - `rand`-prefixed channels for long-lived randomness
   - `meet`-prefixed channels for backchannel / offline chat during recurring meetings
-2. All else is permitted and considered one-off
+  - `office`-prefixed channels for office-specific chat and administrivia
+3. We have a few long lived general purpose channels that have no prefix
+  - `#announcements` - general announcements
+  - `#general` - general chat
+  - `#random` - random chat
+3. All else is permitted and considered one-off
   - You don't have to think about prefixes when making a channel, just make it
   - We regularly archive or add prefixes to long-lived channels via monthly curation
+  - `#general`
 
 ## curation guideliens
 
