@@ -27,7 +27,7 @@ We participate in a number of reoccurring meetings in the open source community.
 | kubernetes-release | Aaron Crickenberger (@spiffxp) | ~2 weeks prior to kubernetes release, daily @ 11:00am PST | 
 | [sig-api-machinery](https://github.com/kubernetes/community/tree/master/sig-api-machinery) | Mikel Nelson (@mikeln) | every other wednesday @ 11:00am PST |
 | [sig-cluster-ops](https://github.com/kubernetes/community/tree/master/sig-cluster-ops) | David Watson (@davidewatson) | every thursday @ 1:00pm PST |
-| [sig-instrumentation](https://github.com/kubernetes/community/tree/master/sig-cluster-ops) | Leah Peterson (@leahnp) | every thursday @ 9:30am PST |
+| [sig-instrumentation](https://github.com/kubernetes/community/tree/master/sig-cluster-ops) | Leah Petersen (@leahnp) | every thursday @ 9:30am PST |
 | [sig-node](https://github.com/kubernetes/community/tree/master/sig-node) | Mikel Nelson (@mikeln) | every tuesday @ 11:00 am PST |
 | [sig-network](https://github.com/kubernetes/community/tree/master/sig-network) | Rick Sostheim (@ostheim) | every thursday @ 2:00pm PST |
 | [sig-storage](https://github.com/kubernetes/community/tree/master/sig-storage) | Patrick Chrisopher (@coffeepac) | every other thursday @ 9:00am PST |
