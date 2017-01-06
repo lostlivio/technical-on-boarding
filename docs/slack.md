@@ -13,9 +13,14 @@ The goal here isn't to enforce strict rigid rules, but to codify 80% of what we 
   - `ping`-prefixed channels for notifications
   - `meet`-prefixed channels for backchannel / offline chat during recurring meetings
   - `office`-prefixed channels for office-specific chat and administrivia
-2. All else is permitted and considered one-off
+3. We have a few long lived general purpose channels that have no prefix
+  - `#announcements` - general announcements
+  - `#general` - general chat
+  - `#random` - random chat
+3. All else is permitted and considered one-off
   - You don't have to think about prefixes when making a channel, just make it
   - We regularly archive or add prefixes to long-lived channels via monthly curation
+  - `#general`
 
 ## curation guideliens
 
