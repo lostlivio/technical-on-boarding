@@ -39,6 +39,7 @@ Looking for feedback if we think SIG's aren't important, SIG's are missing, or o
 | [sig-instrumentation](https://github.com/kubernetes/community/tree/master/sig-cluster-ops) | Patrick Christopher (@coffeepac) | every thursday @ 9:30am PST |
 | [sig-node](https://github.com/kubernetes/community/tree/master/sig-node) | TBD | every tuesday @ 11:00 am PST |
 | [sig-network](https://github.com/kubernetes/community/tree/master/sig-network) | Rick Sostheim (@ostheim) | every thursday @ 2:00pm PST |
+| [sig-on-prem](https://github.com/kubernetes/community/tree/master/sig-on-prem	) | Alejandro Escobar (@alejandroEsc) | TBD |
 | [sig-storage](https://github.com/kubernetes/community/tree/master/sig-storage) | Patrick Chrisopher (@coffeepac) | every other thursday @ 9:00am PST |
 
 ## meetings we infrequently or used to attend
