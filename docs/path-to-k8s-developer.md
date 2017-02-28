@@ -141,7 +141,6 @@ Once you create a fork on github, do the following locally before making a clone
   git remote add upstream https://github.com/kubernetes/kubernetes.git
   ```
 
-
 - Make sure you also install `godep`, `go-bindata`, `golint`, and `cfssl/cmd`:
 
   ```
@@ -159,8 +158,6 @@ Once you create a fork on github, do the following locally before making a clone
    ln -s ../../hooks/pre-commit . \ 
    cd ../../
    ```
-
- 
 
 ## Building Kubernetes
 There are several flags to select from when running `make` to build k8s, regardless, all output 
@@ -188,36 +185,15 @@ To change the memory limit on osx:
 
   
 ### Clean
-Before building, make sure you run `make clean`. 
+Before building, make sure you run 
 
-Any permission issues that cause running `make <command>` to fail can usually be addressed with
-
-`sudo make clean` 
+`make clean`
 
 or if you need to
 
 `rm -rf _output/ `
 
-to remove any remnants of the previous build.
-
-### Make
-
-You can get a complete list of make targets by running 
-
-` make help`
-
-When building the command you will become familiar with is:
-
-`make`
-
-which usually builds the according to the `ARCH` of your machine and runs tests against that build. You can target all
-possible targets using 
-
-`make cross`
-
-which builds all architectures, including `arm`, `arm64`, `amd386`, etc... If you wish to build and skip tests:
-
-`make quick-release` or `make release-skip-tests`
+in order to remove any remnants of the previous build.
 
 ## Testing
 For a good guide regarding testing you can follow
@@ -237,7 +213,7 @@ and include any additional arguments/flags you need, details found [here](https:
 
 ## Local Cluster
 Tip: Minikube is a great tool to understand k8s, in particular running commands using `kubectl` to get services running
-pods up, get an idea of what a namspace is, etc... However, what it is not is a dev tool for k8s. 
+pods up, get an idea of what a namespace is, etc... However, what it is not is a dev tool for k8s. 
 
 
 #### Development Process: Linux
@@ -251,17 +227,29 @@ and then bring up a local stack
 `./hack/local-up-cluster.sh`
 
 there may be other tools available to help you get started developing/building/testing but they are usually 
-bloated and unnecessary. Minikube, for example runs ona pre-built version of K8s, and you will have to build it 
+bloated and unnecessary. Minikube, for example runs on a pre-built version of K8s, and you will have to build it 
 pointing to your local version of K8s.
 
 #### Development Process: Darwin (OSX)
-You will have to use a VM, such a virtual-box. Current suggestion is to use something a guide like
 
-[Developer Guide, IBM](https://developer.ibm.com/opentech/2016/06/15/kubernetes-developer-guide-part-1/)
+Current state:
+- Kubelet will not run, so you can bring up a local cluster, but do not expect to talk to kubelet.
+- All other components will run, no gurantee about how well they will run, nor how stable.
+- E2E testing is possible if deploying a cluster to gke via kube-up.
 
-to follow along. The alternative to this would be to switch over to a linux laptop, or use a linux box to
+##### Local Development Path
+
+Current suggestion is to use a guide like
+
+[Developer Guide, IBM](https://developer.ibm.com/opentech/2016/06/15/kubernetes-developer-guide-part-1/). 
+The alternative to doing so would be to switch over to a linux laptop, or use a linux box to
 use for developing, such as a nuc. Recommended you get at least an i5 with 16gb of ram and a linux distro such as
 Ubuntu LTS.
+
+Based on the current status of k8s development on osx, and as mentioned in the guide above, you will have to use a 
+VM, such a virtual-box. Currently [Veertu-Desktop](https://veertu.com/forums/topic/veertu-desktop/) is the suggested 
+route as it works with the native hypervisor and has been found to perform very well and stable. You are free
+to use what you wish.
 
 ## First PR
 Several approaches to selecting which repo you wish to start contributing to, and generally depends on the level of
@@ -283,29 +271,27 @@ and make changes or updates.
 
 If you opted NOT to do so, then you can manually run the checks by running:
 
-`make verify`
+`make verify` 
 
-either way you will get a list of errors and potentially ways to rectivy the issue. The next section will cover a few
-of the most common.
+which can take 30min+ on mac with 16gb ram and 2.5GHZ i7, either way you will get a list of errors and potentially ways 
+to rectify the issue. The next section will cover a few of the most common.
 
-Please revisit [Life of a Pull Request (VERY IMPORTANT)](https://github.com/kubernetes/kubernetes/blob/master/docs/devel/pull-requests.md)
+Please revisit [Life of a Pull Request (very important)](https://github.com/kubernetes/kubernetes/blob/master/docs/devel/pull-requests.md)
 It will save you a lot of time and pain by following that make verify etc.. process.
 
 
 ### Running Updates
 As you make changes to code, there will on ocassion be a need to run updates to the build, documentations, and ownerships.
 
-The list below is not exhaustive, but there are some of the updates you will, from time to time, be asked to perform.
-
+The list below is not exhaustive, but there are some of the updates you will, from time to time, be asked to perform 
+(they are sorted in order they would need to be run at if asked, e.g., update-generated-swagger-docs.sh would be run before
+you run update-swagger-spec.sh):
 - `./hack/update-bazel.sh`
 - `./hack/update-generated-swagger-docs.sh`
 - `./hack/update-swagger-spec.sh`
-- `./hack/update-openapi-spec.sh`
 - `./hack/update-federation-openapi-spec.sh`
 - `./hack/update-openapi-spec.sh`
-- `./hack/update-federation-openapi-spec.sh`
-- `./hack/update-swagger-spec.sh`
 
-Lastly, if you do change go code, it will be a good idea to run the following (the linter will ask you if you forget)
+Lastly, if you do change GO code, it will be a good idea to run the following (the linter will ask you if you forget)
 
 `gofmt -s -w pkg/kubectl/cmd/version.go`
