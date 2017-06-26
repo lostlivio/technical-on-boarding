@@ -132,6 +132,7 @@ func LoadConfig(filename string) (*Credentials, *SetupScheme) {
 	return &creds, workloadConfig
 }
 
+// process tasks from the setup scheme into client calls
 func (client *WorkflowClient) executeWorkload(creds *Credentials, setup *SetupScheme) error {
 
 	repo, err := client.GetRepository(setup.GithubOrganization, setup.GithubRepository)
@@ -195,7 +196,6 @@ func (client *WorkflowClient) executeWorkload(creds *Credentials, setup *SetupSc
 func PerformWorkload(creds *Credentials, setup *SetupScheme) error {
 
 	return creds.Login(func(client *github.Client, ctx *context.Context) error {
-		// TODO: process tasks from the setup scheme into client calls
 		workflow := WorkflowClient{*ctx, NewGitHubWrapper(client)}
 		emptyUser := "" // this will resolve the "current" user for this client context.
 		log.Printf("Performing workload as %v", workflow.resolveUser(&emptyUser).GetName())
