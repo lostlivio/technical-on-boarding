@@ -6,19 +6,25 @@ package onboarding
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"strconv"
 	"time"
+
+	"os"
 
 	"github.com/google/go-github/github"
 )
 
 type (
+
+	// WorkflowClient interfaces with GitHub's Client model, which
 	WorkflowClient struct {
 		Context context.Context
 		Client  IGitHubClient
 	}
 
+	// WorkflowRepository, similar to WorkflowClient, prese
 	WorkflowRepository struct {
 		Client  IGitHubClient
 		Context context.Context
@@ -75,7 +81,7 @@ type (
 		CreateOrUpdateProject(title *string, description *string, columns []string) (*github.Project, error)
 		FetchMappedProjectColumns(project *github.Project) (map[string](*github.ProjectColumn), error)
 		ColumnsPresent(project *github.Project, columns []string) (bool, error)
-		CreateCardForIssue(issue *github.Issue, project *github.Project, column *github.ProjectColumn) (*github.ProjectCard, error)
+		CreateCardForIssue(issue *github.Issue, column *github.ProjectColumn) (*github.ProjectCard, error)
 
 		// Internal methods (to be overridden by test models)
 		createIssue(service IGitHubIssues, req *github.IssueRequest) (*github.Issue, error)
@@ -112,7 +118,7 @@ func getMilestoneDueTime(fromTime *time.Time) time.Time {
 	return fromTime.AddDate(0, 0, 21+int(offset))
 }
 
-// Prepare application context from configuration file
+// LoadConfig prepares application context from configuration file
 func LoadConfig(filename string) (*Credentials, *SetupScheme) {
 
 	workloadConfig := SetupScheme{}
@@ -127,7 +133,65 @@ func LoadConfig(filename string) (*Credentials, *SetupScheme) {
 	return &creds, &workloadConfig
 }
 
-// Coordinates authentication and workload processing.
+func (client *WorkflowClient) executeWorkload(creds *Credentials, setup *SetupScheme) error {
+
+	repo, err := client.GetRepository(setup.GithubOrganization, setup.GithubRepository)
+
+	if err != nil {
+		return err
+	}
+
+	username := setup.TaskOwners["new_hire"].GithubUsername
+	title := fmt.Sprintf("Welcome @%s!", username)
+	description := fmt.Sprintf("Let's setup up @%s for success. Here's what we need to cover...", username)
+	dueOn := getMilestoneDueTime(nil)
+
+	log.Printf("Creating Milestone: %s", title)
+	milestone, err := repo.CreateOrUpdateMilestone(&title, &description, &dueOn)
+
+	if err != nil {
+		log.Printf("An error occurred: %v", err)
+		return err
+	}
+
+	log.Printf("Creating Project: %s", title)
+	project, err := repo.CreateOrUpdateProject(&title, &description, []string{"Backlog", "In Progress", "Review", "Done"})
+
+	if err != nil {
+		log.Printf("An error occurred: %v", err)
+		return err
+	}
+
+	columns, err := repo.FetchMappedProjectColumns(project)
+
+	if err != nil {
+		log.Printf("An error occurred: %v", err)
+		return err
+	}
+
+	for _, task := range setup.Tasks {
+
+		log.Printf("Preparing Issue: %s", task.Title)
+		issue, err := repo.CreateOrUpdateIssue(&task.Assignee.GithubUsername, &task.Title, &task.Description, milestone.GetNumber())
+
+		if err != nil {
+			log.Printf("An error occurred: %v", err)
+			return err
+		}
+
+		_, err = repo.CreateCardForIssue(issue, columns["Backlog"])
+
+		if err != nil {
+			log.Printf("An error occurred: %v", err)
+			return err
+		}
+
+	}
+
+	return nil
+}
+
+// PerformWorkload coordinates authentication and workload processing.
 func PerformWorkload(creds *Credentials, setup *SetupScheme) error {
 
 	return creds.Login(func(client *github.Client, ctx *context.Context) error {
@@ -135,7 +199,11 @@ func PerformWorkload(creds *Credentials, setup *SetupScheme) error {
 		workflow := WorkflowClient{*ctx, NewGitHubWrapper(client)}
 		emptyUser := "" // this will resolve the "current" user for this client context.
 		log.Printf("Performing workload as %v", workflow.resolveUser(&emptyUser).GetName())
-		return nil
+		err := workflow.executeWorkload(creds, setup)
+		if err == nil {
+			log.Println("Completed workload processing.")
+		}
+		return err
 	})
 }
 
@@ -564,31 +632,42 @@ func (repo *WorkflowRepository) fetchProjectCards(column *github.ProjectColumn) 
 	return resultCards, nil
 }
 
-func (repo *WorkflowRepository) CreateCardForIssue(issue *github.Issue, project *github.Project, column *github.ProjectColumn) (*github.ProjectCard, error) {
+func (repo *WorkflowRepository) GetFirstColumn(project *github.Project) (*github.ProjectColumn, error) {
+	var column *github.ProjectColumn
+	minColumnID := 0
+	service := repo.Client.getProjectsService()
+	columnsList, err := repo.fetchProjectColumns(service, project)
+
+	if err != nil {
+		return nil, err
+	}
+
+	for _, col := range columnsList {
+		if (minColumnID == 0) || (minColumnID > col.GetID()) {
+			minColumnID = col.GetID()
+			column = col
+		}
+	}
+	return column, nil
+}
+
+func (repo *WorkflowRepository) CreateCardForIssue(issue *github.Issue, column *github.ProjectColumn) (*github.ProjectCard, error) {
 
 	service := repo.Client.getProjectsService()
 
 	cardOpts := github.ProjectCardOptions{
-		ContentID:   issue.GetNumber(),
-		ContentType: "issue",
+		ContentID:   issue.GetID(),
+		ContentType: "Issue",
 	}
 
-	if column == nil { // Automatically select the minimum column in the project
-		minColumnId := 0
-		columnsList, _ := repo.fetchProjectColumns(service, project)
-		for _, col := range columnsList {
-			if (minColumnId == 0) || (minColumnId > col.GetID()) {
-				minColumnId = col.GetID()
-				column = col
-			}
-		}
-	}
-
+	log.Printf("Creating card for issue #%d '%s', in column '%s' #%d; %#v", issue.GetNumber(), issue.GetTitle(), column.GetName(), column.GetID(), cardOpts)
 	card, _, err := service.CreateProjectCard(repo.Context, column.GetID(), &cardOpts)
 
 	if err != nil {
 		return nil, err
 	}
+
+	log.Printf("Card created: %d '%s'", card.GetID(), card.GetNote())
 
 	return card, nil
 }
@@ -628,4 +707,13 @@ func (repo *WorkflowRepository) ColumnsPresent(project *github.Project, columns 
 	}
 
 	return (countMissing < 1), nil
+}
+
+func Main() {
+	configFilename := os.Args[1]
+	credentials, setup := LoadConfig(configFilename)
+	err := PerformWorkload(credentials, setup)
+	if err != nil {
+		log.Printf("Error occurred from `credentials.Login(): %v`", err)
+	}
 }

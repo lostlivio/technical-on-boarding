@@ -6,6 +6,7 @@ It requires the GitHub Client mock/fixtures implemented in `github_client_test.g
 */
 
 import (
+	"log"
 	"testing"
 	"time"
 
@@ -200,7 +201,7 @@ func TestCreateIssuesCards(t *testing.T) {
 
 	project, _ := repo.CreateOrUpdateProject(&projectName, &projectDescription, projectColumns)
 
-	// columns, _ := repo.FetchMappedProjectColumns(project)
+	columns, _ := repo.FetchMappedProjectColumns(project)
 
 	issues := []struct {
 		title       string
@@ -226,7 +227,7 @@ func TestCreateIssuesCards(t *testing.T) {
 		// cache them...
 		resultIssues = append(resultIssues, thisIssue)
 
-		card, _ := repo.CreateCardForIssue(thisIssue, project, nil)
+		card, _ := repo.CreateCardForIssue(thisIssue, columns["backlog"])
 		resultCards = append(resultCards, card)
 	}
 
@@ -236,4 +237,33 @@ func TestCreateIssuesCards(t *testing.T) {
 		}
 	}
 
+}
+
+func TestFullWorkload(t *testing.T) {
+	client := prepareGitHubClientTest()
+	creds := Credentials{
+		ClientID:     "TEST_CLIENT_ID",
+		ClientSecret: "TEST_CLIENT_SECRET",
+		Scopes:       []string{"user", "repo", "issues", "milestones"},
+	}
+	setup := SetupScheme{
+		ClientID:           creds.ClientID,
+		ClientSecret:       creds.ClientSecret,
+		GithubOrganization: "testOrganization",
+		GithubRepository:   "testRepository",
+		Tasks: []TaskEntry{
+			TaskEntry{Title: "test1", Description: "test", Assignee: indirectAssignee{GithubUsername: "test"}},
+			TaskEntry{Title: "test2", Description: "test", Assignee: indirectAssignee{GithubUsername: "test"}},
+			TaskEntry{Title: "test3", Description: "test", Assignee: indirectAssignee{GithubUsername: "test"}},
+		},
+		TaskOwners: map[string]indirectAssignee{
+			"new_hire": indirectAssignee{GithubUsername: "test"},
+		},
+	}
+
+	err := client.executeWorkload(&creds, &setup)
+
+	if err != nil {
+		log.Fatalf("Something broke in full workload. %v", err)
+	}
 }

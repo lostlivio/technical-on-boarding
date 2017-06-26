@@ -139,10 +139,11 @@ func (auth *AuthenticationEnviron) handlerAuthenticated(onSuccess func(*github.C
 func (auth *AuthenticationEnviron) authenticate(onSuccess func(*github.Client) error) error {
 
 	http.HandleFunc("/", auth.handlerMain())
-	http.HandleFunc("/", auth.handlerLogin())
+	http.HandleFunc("/login", auth.handlerLogin())
 	http.HandleFunc("/github_oauth_cb", auth.handlerAuthenticated(onSuccess))
 
 	log.Println("Please open your browser and navigate to http://127.0.0.1:7000 to authenticate...")
+	log.Println(http.ListenAndServe(":7000", nil))
 
 	return nil
 }

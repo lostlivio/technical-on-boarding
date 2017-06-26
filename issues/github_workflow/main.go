@@ -1,5 +1,0 @@
-package onboarding
-
-func main() {
-
-}
