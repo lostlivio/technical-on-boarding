@@ -75,6 +75,9 @@ tasks:
     assignee: *new_hire
     description: |
       Start here? `https://tour.golang.org/welcome/1`
+      
+      See also:
+        - [Kubernetes Coding Conventions](https://github.com/kubernetes/community/blob/master/contributors/devel/coding-conventions.md)
 
 
   - title: Culture Lightning Talk
