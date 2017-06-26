@@ -18,7 +18,7 @@
 ## Usage
 
 To run this application, you need credentials for the `SDSA onboarding workflow` application. 
-Please reach @coffeepac or @samba if you need these credentials.
+Please ping `@here` in the Slack channel `#team-tooltime` if you need these credentials.
 
 ```shell
 sh setup.sh  # installs dependencies, etc
