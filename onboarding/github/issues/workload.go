@@ -119,9 +119,13 @@ func getMilestoneDueTime(fromTime *time.Time) time.Time {
 }
 
 // LoadConfig prepares application context from configuration file
-func LoadConfig(filename string) (*Credentials, *SetupScheme) {
+func LoadConfig(filename string) (*Credentials, *SetupScheme, error) {
 
-	workloadConfig := NewSetupScheme(filename)
+	workloadConfig, err := NewSetupScheme(filename)
+
+	if err != nil {
+		return nil, nil, err
+	}
 
 	creds := Credentials{
 		ClientID:     workloadConfig.ClientID,
@@ -129,7 +133,7 @@ func LoadConfig(filename string) (*Credentials, *SetupScheme) {
 		Scopes:       []string{"user", "repo", "issues", "milestones"},
 	}
 
-	return &creds, workloadConfig
+	return &creds, workloadConfig, nil
 }
 
 // process tasks from the setup scheme into client calls
@@ -171,7 +175,7 @@ func (client *WorkflowClient) executeWorkload(creds *Credentials, setup *SetupSc
 
 	for _, task := range setup.Tasks {
 
-		log.Printf("Preparing Issue: %s", task.Title)
+		// log.Printf("Preparing Issue: %s", task.Title)
 		issue, err := repo.CreateOrUpdateIssue(&task.Assignee.GithubUsername, &task.Title, &task.Description, milestone.GetNumber())
 
 		if err != nil {
@@ -667,7 +671,7 @@ func (repo *WorkflowRepository) CreateCardForIssue(issue *github.Issue, column *
 		return nil, err
 	}
 
-	log.Printf("Card created: %d '%s'", card.GetID(), card.GetNote())
+	// log.Printf("Card created: %d '%s'", card.GetID(), card.GetNote())
 
 	return card, nil
 }
@@ -709,11 +713,19 @@ func (repo *WorkflowRepository) ColumnsPresent(project *github.Project, columns 
 	return (countMissing < 1), nil
 }
 
-func Main() {
+func Main() int {
 	configFilename := os.Args[1]
-	credentials, setup := LoadConfig(configFilename)
-	err := PerformWorkload(credentials, setup)
+	credentials, setup, err := LoadConfig(configFilename)
+	if err != nil {
+		log.Printf("Could not load configuration [%s], %v", configFilename, err)
+		return 1
+	}
+
+	err = PerformWorkload(credentials, setup)
 	if err != nil {
 		log.Printf("Error occurred from `credentials.Login(): %v`", err)
+		return 5
 	}
+
+	return 0
 }

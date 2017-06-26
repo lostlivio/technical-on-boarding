@@ -2,6 +2,7 @@ package onboarding
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"html/template"
 	"io/ioutil"
@@ -71,7 +72,7 @@ func (setup *SetupScheme) load(filename string, environ *map[string]string) erro
 	return setup.ingest(data, environ)
 }
 
-func NewSetupScheme(filename string) *SetupScheme {
+func NewSetupScheme(filename string) (*SetupScheme, error) {
 
 	environ := map[string]string{
 		"GITHUB_CLIENT_ID":     os.Getenv("GITHUB_CLIENT_ID"),
@@ -83,12 +84,12 @@ func NewSetupScheme(filename string) *SetupScheme {
 
 	for env, value := range environ {
 		if len(value) == 0 {
-			panic(fmt.Sprintf("Please define environment var %s", env))
+			return nil, errors.New(fmt.Sprintf("Please define environment var %s", env))
 		}
 	}
 
 	setup := SetupScheme{}
 	setup.load(filename, &environ)
 
-	return &setup
+	return &setup, nil
 }
