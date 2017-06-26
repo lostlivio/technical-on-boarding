@@ -121,8 +121,7 @@ func getMilestoneDueTime(fromTime *time.Time) time.Time {
 // LoadConfig prepares application context from configuration file
 func LoadConfig(filename string) (*Credentials, *SetupScheme) {
 
-	workloadConfig := SetupScheme{}
-	workloadConfig.load(filename)
+	workloadConfig := NewSetupScheme(filename)
 
 	creds := Credentials{
 		ClientID:     workloadConfig.ClientID,
@@ -130,7 +129,7 @@ func LoadConfig(filename string) (*Credentials, *SetupScheme) {
 		Scopes:       []string{"user", "repo", "issues", "milestones"},
 	}
 
-	return &creds, &workloadConfig
+	return &creds, workloadConfig
 }
 
 func (client *WorkflowClient) executeWorkload(creds *Credentials, setup *SetupScheme) error {
@@ -175,15 +174,16 @@ func (client *WorkflowClient) executeWorkload(creds *Credentials, setup *SetupSc
 		issue, err := repo.CreateOrUpdateIssue(&task.Assignee.GithubUsername, &task.Title, &task.Description, milestone.GetNumber())
 
 		if err != nil {
-			log.Printf("An error occurred: %v", err)
+			log.Printf("Error creating issue: %v", err)
 			return err
 		}
 
+		// NOTE: this fails with HTTP 422 when the the issue already has a card in the project.
 		_, err = repo.CreateCardForIssue(issue, columns["Backlog"])
 
 		if err != nil {
-			log.Printf("An error occurred: %v", err)
-			return err
+			log.Printf("Error creating card: %v", err)
+			// DO NOT return here.
 		}
 
 	}

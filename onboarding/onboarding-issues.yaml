@@ -1,17 +1,13 @@
 
 
-githubOrganization: samba
-githubRepository: technical-on-boarding
-clientId: 3750c615caea4ba41f52
-clientSecret: "{SECRET_GITHUB_AUTHENTICATION_TOKEN}" 
+githubOrganization: "{{ index .Environ "GITHUB_ORG" }}"
+githubRepository: "{{ index .Environ "GITHUB_REPO" }}"
+clientId: "{{ index .Environ "GITHUB_CLIENT_ID" }}"
+clientSecret: "{{ index .Environ "GITHUB_CLIENT_SECRET" }}" 
 
 task_owners: # The following will be referenced as assignees in GitHub
   new_hire: &new_hire # The newly hired staffmember who's in the process of onboarding.
-    github_username: "samba" # This is me.
-  team_lead: &team_lead # Governs access to Google Cloud & GitHub.
-    github_username: "coffepac"  # Patrick Christopher
-  central_it: &central_it # Governs access to AWS and other third party services etc.
-    github_username: "jason"
+    github_username: "{{ index .Environ "GITHUB_USER" }}" 
   
 
 tasks: 

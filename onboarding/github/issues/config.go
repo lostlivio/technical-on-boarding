@@ -1,8 +1,12 @@
 package onboarding
 
 import (
+	"bytes"
+	"fmt"
+	"html/template"
 	"io/ioutil"
 	"log"
+	"os"
 
 	yaml "gopkg.in/yaml.v2"
 )
@@ -34,22 +38,57 @@ func (assignee *indirectAssignee) String() string {
 	return assignee.GithubUsername
 }
 
-func (setup *SetupScheme) ingest(data []byte) error {
+func (setup *SetupScheme) ingest(data []byte, environ *map[string]string) error {
+	var rendered bytes.Buffer
 
-	err := yaml.Unmarshal(data, &setup)
+	context := map[string]map[string]string{
+		"Environ": *environ,
+	}
+
+	tpl, err := template.New("config").Parse(string(data))
 
 	if err != nil {
+		return err
+	}
+
+	if err = tpl.Execute(&rendered, context); err != nil {
+		return err
+	}
+
+	if err = yaml.Unmarshal(rendered.Bytes(), &setup); err != nil {
 		log.Fatal(err)
 	}
 
 	return err
 }
 
-func (setup *SetupScheme) load(filename string) error {
+func (setup *SetupScheme) load(filename string, environ *map[string]string) error {
 	data, err := ioutil.ReadFile(filename)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	return setup.ingest(data)
+	return setup.ingest(data, environ)
+}
+
+func NewSetupScheme(filename string) *SetupScheme {
+
+	environ := map[string]string{
+		"GITHUB_CLIENT_ID":     os.Getenv("GITHUB_CLIENT_ID"),
+		"GITHUB_CLIENT_SECRET": os.Getenv("GITHUB_CLIENT_SECRET"),
+		"GITHUB_REPO":          os.Getenv("GITHUB_REPO"),
+		"GITHUB_ORG":           os.Getenv("GITHUB_ORG"),
+		"GITHUB_USER":          os.Getenv("GITHUB_USER"),
+	}
+
+	for env, value := range environ {
+		if len(value) == 0 {
+			panic(fmt.Sprintf("Please define environment var %s", env))
+		}
+	}
+
+	setup := SetupScheme{}
+	setup.load(filename, &environ)
+
+	return &setup
 }

@@ -12,7 +12,7 @@ clientSecret: testApplicationSecret
 
 task_owners:
     testOwner1: &owner_one
-        github_username: testUsername1
+        github_username: "{{ index .Environ "GITHUB_USER" }}"
     testOwner2: &owner_two
         github_username: testUsername2
 
@@ -34,7 +34,10 @@ tasks:
 
 func TestConfigYAMLParser(t *testing.T) {
 	scheme := SetupScheme{}
-	err := scheme.ingest([]byte(testYamlDataFixture))
+	environ := map[string]string{
+		"GITHUB_USER": "testUsername1",
+	}
+	err := scheme.ingest([]byte(testYamlDataFixture), &environ)
 
 	if err != nil {
 		t.Fatalf("Loading sample YAML failed with error: %v", err)
