@@ -1,0 +1,21 @@
+node('OnboardingWorkflow') {
+
+    stage('checkout') {
+        checkout scm
+    }
+    stage('dependencies') {
+        sh 'go get go get github.com/satori/go.uuid'
+        sh 'go get github.com/google/go-github/github'
+        sh 'go get gopkg.in/yaml.v2'
+    }
+    stage('build'){
+        sh 'go build -v -o ./prepare_workload github.com/samsung-cnct/technical-on-boarding/onboarding/cmd'
+    }
+    stage('sanity check'){
+        sh 'go vet -v -x github.com/samsung-cnct/technical-on-boarding/onboarding/github/issues/'
+        sh 'go fmt -x github.com/samsung-cnct/technical-on-boarding/onboarding/github/issues/'
+    }
+    stage('test'){
+        sh 'go test -v -x github.com/samsung-cnct/technical-on-boarding/onboarding/github/issues/'
+    }
+}
