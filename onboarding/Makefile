@@ -7,4 +7,4 @@ build: prepare_workload
 
 test:
 	go test -v github.com/samsung-cnct/technical-on-boarding/onboarding/github/issues/
-	go vet -v -all github.com/samsung-cnct/technical-on-boarding/onboarding/github/issues/
+	go vet -v github.com/samsung-cnct/technical-on-boarding/onboarding/github/issues/
