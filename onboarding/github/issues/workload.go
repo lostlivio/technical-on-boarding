@@ -18,37 +18,38 @@ import (
 
 type (
 
-	// WorkflowClient interfaces with GitHub's Client model, which
+	// WorkflowClient interfaces with GitHub's Client model, providing access to repositories, and supporting a mock interface.
 	WorkflowClient struct {
 		Context context.Context
 		Client  IGitHubClient
 	}
 
-	// WorkflowRepository, similar to WorkflowClient, prese
+	// WorkflowRepository provides derived access to repository-scoped resources, e.g. issues, projects, etc.
 	WorkflowRepository struct {
 		Client  IGitHubClient
 		Context context.Context
 		*github.Repository
 	}
 
+	// GitHubClientWrapper implements iGitHubClient, and provides a this abstraction to simplify mocking for test.
 	GitHubClientWrapper struct {
 		*github.Client
 	}
 
+	// IGitHubClient implemented by GitHubClientWrapper, abstracts properties of *github.Client
 	IGitHubClient interface {
-		// These are implemented by GitHubClientWrapper and alias properties of *github.Client
-		getIssuesService() IGitHubIssues
-		getRepositoriesService() IGitHubRepositories
-		getProjectsService() IGitHubProjects
-		getUsersService() IGitHubUsers
+		getIssuesService() iGitHubIssues
+		getRepositoriesService() iGitHubRepositories
+		getProjectsService() iGitHubProjects
+		getUsersService() iGitHubUsers
 	}
 
-	IGitHubUsers interface {
+	iGitHubUsers interface {
 		// for github.Client.Users
 		Get(ctx context.Context, username string) (*github.User, *github.Response, error)
 	}
 
-	IGitHubIssues interface {
+	iGitHubIssues interface {
 		// for github.Client.Issues
 		ListMilestones(ctx context.Context, owner string, repo string, opts *github.MilestoneListOptions) ([]*github.Milestone, *github.Response, error)
 		CreateMilestone(ctx context.Context, owner string, repo string, opts *github.Milestone) (*github.Milestone, *github.Response, error)
@@ -57,14 +58,14 @@ type (
 		Edit(ctx context.Context, owner string, repo string, issueID int, req *github.IssueRequest) (*github.Issue, *github.Response, error)
 	}
 
-	IGitHubRepositories interface {
+	iGitHubRepositories interface {
 		// for github.Client.Repositories
 		CreateProject(ctx context.Context, owner string, repo string, opts *github.ProjectOptions) (*github.Project, *github.Response, error)
 		ListProjects(ctx context.Context, owner string, repo string, opts *github.ProjectListOptions) ([]*github.Project, *github.Response, error)
 		Get(ctx context.Context, owner string, repo string) (*github.Repository, *github.Response, error)
 	}
 
-	IGitHubProjects interface {
+	iGitHubProjects interface {
 		// for github.Client.Projects
 		UpdateProject(ctx context.Context, projectID int, opts *github.ProjectOptions) (*github.Project, *github.Response, error)
 		CreateProjectColumn(ctx context.Context, projectID int, opts *github.ProjectColumnOptions) (*github.ProjectColumn, *github.Response, error)
@@ -73,6 +74,7 @@ type (
 		ListProjectCards(ctx context.Context, columnID int, opt *github.ListOptions) ([]*github.ProjectCard, *github.Response, error)
 	}
 
+	// IRepositoryAccess provides simplified procedures for this project's business case, namily masking non-idempotent requests to reduce duplication.
 	IRepositoryAccess interface {
 		// Methods implemented in our proxy
 		GetIssuesByRequest(request *github.IssueRequest) ([]*github.Issue, error)
@@ -84,24 +86,24 @@ type (
 		CreateCardForIssue(issue *github.Issue, column *github.ProjectColumn) (*github.ProjectCard, error)
 
 		// Internal methods (to be overridden by test models)
-		createIssue(service IGitHubIssues, req *github.IssueRequest) (*github.Issue, error)
-		updateIssue(service IGitHubIssues, issue *github.Issue, req *github.IssueRequest) (*github.Issue, error)
-		fetchIssues(service IGitHubIssues, listOpts *github.IssueListByRepoOptions) ([](*github.Issue), error)
-		fetchProjects(service IGitHubRepositories, listOpts *github.ProjectListOptions) ([]*github.Project, error)
-		createProject(service IGitHubRepositories, createOpts *github.ProjectOptions) (*github.Project, error)
-		updateProject(service IGitHubProjects, project *github.Project, updateOpts *github.ProjectOptions) (*github.Project, error)
-		fetchProjectColumns(service IGitHubProjects, project *github.Project) ([]*github.ProjectColumn, error)
-		createProjectColumns(service IGitHubProjects, project *github.Project, columns []string) ([]*github.ProjectColumn, error)
-		createMilestone(service IGitHubIssues, ms *github.Milestone) (*github.Milestone, error)
-		fetchMilestones(service IGitHubIssues, listOpts *github.MilestoneListOptions) ([]*github.Milestone, error)
+		createIssue(service iGitHubIssues, req *github.IssueRequest) (*github.Issue, error)
+		updateIssue(service iGitHubIssues, issue *github.Issue, req *github.IssueRequest) (*github.Issue, error)
+		fetchIssues(service iGitHubIssues, listOpts *github.IssueListByRepoOptions) ([](*github.Issue), error)
+		fetchProjects(service iGitHubRepositories, listOpts *github.ProjectListOptions) ([]*github.Project, error)
+		createProject(service iGitHubRepositories, createOpts *github.ProjectOptions) (*github.Project, error)
+		updateProject(service iGitHubProjects, project *github.Project, updateOpts *github.ProjectOptions) (*github.Project, error)
+		fetchProjectColumns(service iGitHubProjects, project *github.Project) ([]*github.ProjectColumn, error)
+		createProjectColumns(service iGitHubProjects, project *github.Project, columns []string) ([]*github.ProjectColumn, error)
+		createMilestone(service iGitHubIssues, ms *github.Milestone) (*github.Milestone, error)
+		fetchMilestones(service iGitHubIssues, listOpts *github.MilestoneListOptions) ([]*github.Milestone, error)
 	}
 
-	IClientAccess interface {
+	iClientAccess interface {
 		// Methods implemented in our proxy
 		GetRepository(owner string, name string) (IRepositoryAccess, error)
 
 		// Internal methods (to be overridden by test models)
-		fetchRepository(service IGitHubRepositories, owner *string, name *string) (IRepositoryAccess, error)
+		fetchRepository(service iGitHubRepositories, owner *string, name *string) (IRepositoryAccess, error)
 		resolveUser(username *string) *github.User
 	}
 )
@@ -216,24 +218,24 @@ func NewGitHubWrapper(client *github.Client) IGitHubClient {
 	return &GitHubClientWrapper{client}
 }
 
-func (wrap *GitHubClientWrapper) getRepositoriesService() IGitHubRepositories {
+func (wrap *GitHubClientWrapper) getRepositoriesService() iGitHubRepositories {
 	return wrap.Client.Repositories
 }
 
-func (wrap *GitHubClientWrapper) getIssuesService() IGitHubIssues {
+func (wrap *GitHubClientWrapper) getIssuesService() iGitHubIssues {
 	return wrap.Client.Issues
 }
 
-func (wrap *GitHubClientWrapper) getProjectsService() IGitHubProjects {
+func (wrap *GitHubClientWrapper) getProjectsService() iGitHubProjects {
 	return wrap.Client.Projects
 }
 
-func (wrap *GitHubClientWrapper) getUsersService() IGitHubUsers {
+func (wrap *GitHubClientWrapper) getUsersService() iGitHubUsers {
 	return wrap.Client.Users
 }
 
 // This method is an abstraction intended to be overridden by test models.
-func (client *WorkflowClient) fetchRepository(service IGitHubRepositories, owner *string, name *string) (IRepositoryAccess, error) {
+func (client *WorkflowClient) fetchRepository(service iGitHubRepositories, owner *string, name *string) (IRepositoryAccess, error) {
 
 	repo, _, err := service.Get(client.Context, *owner, *name)
 	if err != nil {
@@ -250,7 +252,7 @@ func (client *WorkflowClient) GetRepository(owner string, name string) (IReposit
 }
 
 // This method is an abstraction intended to be overridden by test models.
-func (repo *WorkflowRepository) fetchIssues(service IGitHubIssues, listOpts *github.IssueListByRepoOptions) ([](*github.Issue), error) {
+func (repo *WorkflowRepository) fetchIssues(service iGitHubIssues, listOpts *github.IssueListByRepoOptions) ([](*github.Issue), error) {
 
 	context := repo.Context
 	owner := repo.Owner.GetLogin()
@@ -277,7 +279,7 @@ func (repo *WorkflowRepository) fetchIssues(service IGitHubIssues, listOpts *git
 	return resultIssues, err
 }
 
-// GetIssueByTitleAndAssignee fetches an issue, if present, by title, milestone, and assignee username
+// GetIssuesByRequest fetches an issue, if present, by title, milestone, and assignee username
 func (repo *WorkflowRepository) GetIssuesByRequest(request *github.IssueRequest) ([]*github.Issue, error) {
 
 	var resultIssues [](*github.Issue)
@@ -317,7 +319,7 @@ func (repo *WorkflowRepository) GetIssuesByRequest(request *github.IssueRequest)
 }
 
 // This method is an abstraction intended to be overridden by test models.
-func (repo *WorkflowRepository) createIssue(service IGitHubIssues, req *github.IssueRequest) (*github.Issue, error) {
+func (repo *WorkflowRepository) createIssue(service iGitHubIssues, req *github.IssueRequest) (*github.Issue, error) {
 	owner := repo.Owner.GetLogin()
 	issue, _, err := service.Create(repo.Context, owner, repo.GetName(), req)
 	if err != nil {
@@ -328,7 +330,7 @@ func (repo *WorkflowRepository) createIssue(service IGitHubIssues, req *github.I
 }
 
 // This method is an abstraction intended to be overridden by test models.
-func (repo *WorkflowRepository) updateIssue(service IGitHubIssues, issue *github.Issue, req *github.IssueRequest) (*github.Issue, error) {
+func (repo *WorkflowRepository) updateIssue(service iGitHubIssues, issue *github.Issue, req *github.IssueRequest) (*github.Issue, error) {
 	owner := repo.Owner.GetLogin()
 	issue, _, err := service.Edit(repo.Context, owner, repo.GetName(), issue.GetNumber(), req)
 	if err != nil {
@@ -409,7 +411,7 @@ func (client *WorkflowClient) resolveUser(username *string) *github.User {
 }
 
 // This method is an abstraction intended to be overridden by test models.
-func (repo *WorkflowRepository) fetchMilestones(service IGitHubIssues, listOpts *github.MilestoneListOptions) ([]*github.Milestone, error) {
+func (repo *WorkflowRepository) fetchMilestones(service iGitHubIssues, listOpts *github.MilestoneListOptions) ([]*github.Milestone, error) {
 	var resultMilestones []*github.Milestone
 
 	stop := false
@@ -433,7 +435,7 @@ func (repo *WorkflowRepository) fetchMilestones(service IGitHubIssues, listOpts 
 }
 
 // This method is an abstraction intended to be overridden by test models.
-func (repo *WorkflowRepository) createMilestone(service IGitHubIssues, ms *github.Milestone) (*github.Milestone, error) {
+func (repo *WorkflowRepository) createMilestone(service iGitHubIssues, ms *github.Milestone) (*github.Milestone, error) {
 	owner := repo.Owner.GetLogin()
 	milestone, _, err := service.CreateMilestone(repo.Context, owner, repo.GetName(), ms)
 	if err != nil {
@@ -479,7 +481,7 @@ func (repo *WorkflowRepository) CreateOrUpdateMilestone(title *string, descripti
 }
 
 // This method is an abstraction intended to be overridden by test models.
-func (repo *WorkflowRepository) fetchProjects(service IGitHubRepositories, listOpts *github.ProjectListOptions) ([]*github.Project, error) {
+func (repo *WorkflowRepository) fetchProjects(service iGitHubRepositories, listOpts *github.ProjectListOptions) ([]*github.Project, error) {
 	var resultProjects []*github.Project
 
 	stop := false
@@ -503,20 +505,20 @@ func (repo *WorkflowRepository) fetchProjects(service IGitHubRepositories, listO
 }
 
 // This method is an abstraction intended to be overridden by test models.
-func (repo *WorkflowRepository) createProject(service IGitHubRepositories, createOpts *github.ProjectOptions) (*github.Project, error) {
+func (repo *WorkflowRepository) createProject(service iGitHubRepositories, createOpts *github.ProjectOptions) (*github.Project, error) {
 	owner := repo.Owner.GetLogin()
 	proj, _, err := service.CreateProject(repo.Context, owner, repo.GetName(), createOpts)
 	return proj, err
 }
 
 // This method is an abstraction intended to be overridden by test models.
-func (repo *WorkflowRepository) updateProject(service IGitHubProjects, project *github.Project, updateOpts *github.ProjectOptions) (*github.Project, error) {
+func (repo *WorkflowRepository) updateProject(service iGitHubProjects, project *github.Project, updateOpts *github.ProjectOptions) (*github.Project, error) {
 	proj, _, err := service.UpdateProject(repo.Context, project.GetID(), updateOpts)
 	return proj, err
 }
 
 // This method is an abstraction intended to be overridden by test models.
-func (repo *WorkflowRepository) createProjectColumns(service IGitHubProjects, project *github.Project, columns []string) ([]*github.ProjectColumn, error) {
+func (repo *WorkflowRepository) createProjectColumns(service iGitHubProjects, project *github.Project, columns []string) ([]*github.ProjectColumn, error) {
 	var resultColumns []*github.ProjectColumn
 	ctx := repo.Context
 
@@ -542,7 +544,7 @@ func (repo *WorkflowRepository) CreateOrUpdateProject(title *string, description
 
 	var projectFound *github.Project
 	var err error
-	var updateNeeded bool = false
+	var updateNeeded = false
 
 	listOpts := github.ProjectListOptions{}
 
@@ -593,7 +595,7 @@ func (repo *WorkflowRepository) CreateOrUpdateProject(title *string, description
 }
 
 // This method is an abstraction intended to be overridden by test models.
-func (repo *WorkflowRepository) fetchProjectColumns(service IGitHubProjects, project *github.Project) ([]*github.ProjectColumn, error) {
+func (repo *WorkflowRepository) fetchProjectColumns(service iGitHubProjects, project *github.Project) ([]*github.ProjectColumn, error) {
 	var resultColumns []*github.ProjectColumn
 	ctx := repo.Context
 	listOpts := github.ListOptions{}
@@ -636,6 +638,7 @@ func (repo *WorkflowRepository) fetchProjectCards(column *github.ProjectColumn) 
 	return resultCards, nil
 }
 
+// GetFirstColumn fetches the columns associated with a GitHub Project, and returns the one with the smallest ID, assuming that this indicates it was created first.
 func (repo *WorkflowRepository) GetFirstColumn(project *github.Project) (*github.ProjectColumn, error) {
 	var column *github.ProjectColumn
 	minColumnID := 0
@@ -655,6 +658,7 @@ func (repo *WorkflowRepository) GetFirstColumn(project *github.Project) (*github
 	return column, nil
 }
 
+// CreateCardForIssue creates a Card in a GitHub project for a given GitHub Issue
 func (repo *WorkflowRepository) CreateCardForIssue(issue *github.Issue, column *github.ProjectColumn) (*github.ProjectCard, error) {
 
 	service := repo.Client.getProjectsService()
@@ -693,7 +697,7 @@ func (repo *WorkflowRepository) FetchMappedProjectColumns(project *github.Projec
 	return columnsFoundMap, nil
 }
 
-// ColumnsExist indicates whether all the named columns are present in a project.
+// ColumnsPresent indicates whether all the named columns are present in a project.
 func (repo *WorkflowRepository) ColumnsPresent(project *github.Project, columns []string) (bool, error) {
 	foundColumns, err := repo.fetchProjectColumns(repo.Client.getProjectsService(), project)
 	if err != nil {
@@ -713,6 +717,8 @@ func (repo *WorkflowRepository) ColumnsPresent(project *github.Project, columns 
 	return (countMissing < 1), nil
 }
 
+// Main is called by main() in related commandline tools.
+// Loads configuration and executes indicated workload.
 func Main() int {
 	configFilename := os.Args[1]
 	credentials, setup, err := LoadConfig(configFilename)

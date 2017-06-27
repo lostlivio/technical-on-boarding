@@ -2,7 +2,6 @@ package onboarding
 
 import (
 	"bytes"
-	"errors"
 	"fmt"
 	"html/template"
 	"io/ioutil"
@@ -72,6 +71,7 @@ func (setup *SetupScheme) load(filename string, environ *map[string]string) erro
 	return setup.ingest(data, environ)
 }
 
+// NewSetupScheme constructs a SetupScheme instance, the combined effect of a template file and environment variables.
 func NewSetupScheme(filename string) (*SetupScheme, error) {
 
 	environ := map[string]string{
@@ -84,7 +84,7 @@ func NewSetupScheme(filename string) (*SetupScheme, error) {
 
 	for env, value := range environ {
 		if len(value) == 0 {
-			return nil, errors.New(fmt.Sprintf("Please define environment var %s", env))
+			return nil, (fmt.Errorf("Please define environment var %s", env))
 		}
 	}
 

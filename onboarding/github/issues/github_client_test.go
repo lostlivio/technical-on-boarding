@@ -44,19 +44,19 @@ func prepareGitHubClientTest() *WorkflowClient {
 	return &WorkflowClient{context, TestGitHubClient{cache}}
 }
 
-func (client TestGitHubClient) getIssuesService() IGitHubIssues {
+func (client TestGitHubClient) getIssuesService() iGitHubIssues {
 	return &TestIssues{&client.Cache}
 }
 
-func (client TestGitHubClient) getRepositoriesService() IGitHubRepositories {
+func (client TestGitHubClient) getRepositoriesService() iGitHubRepositories {
 	return &TestRepositories{&client.Cache}
 }
 
-func (client TestGitHubClient) getProjectsService() IGitHubProjects {
+func (client TestGitHubClient) getProjectsService() iGitHubProjects {
 	return &TestProjects{&client.Cache}
 }
 
-func (client TestGitHubClient) getUsersService() IGitHubUsers {
+func (client TestGitHubClient) getUsersService() iGitHubUsers {
 	return &TestUsers{&client.Cache}
 }
 
@@ -265,9 +265,7 @@ func (repos *TestRepositories) CreateProject(ctx context.Context, owner string, 
 // TODO: migrate this out to a separate seeding function for the cache.
 func (repos *TestRepositories) ListProjects(ctx context.Context, owner string, repo string, opts *github.ProjectListOptions) ([]*github.Project, *github.Response, error) {
 
-	var resultProjects []*github.Project
-
-	resultProjects = make([]*github.Project, 3)
+	var resultProjects = make([]*github.Project, 3)
 
 	names := []string{"Project 1", "Project 2", "Project 3"}
 	bodies := []string{"This is a project", "This is a project", "This is a project"}
