@@ -155,23 +155,20 @@ func (client *WorkflowClient) executeWorkload(creds *Credentials, setup *SetupSc
 	milestone, err := repo.CreateOrUpdateMilestone(&title, &description, &dueOn)
 
 	if err != nil {
-		log.Printf("An error occurred: %v", err)
-		return err
+		return fmt.Errorf("Failed to create milestone: %v", err)
 	}
 
 	log.Printf("Creating Project: %s", title)
 	project, err := repo.CreateOrUpdateProject(&title, &description, []string{"Backlog", "In Progress", "Review", "Done"})
 
 	if err != nil {
-		log.Printf("An error occurred: %v", err)
-		return err
+		return fmt.Errorf("Failed to create project: %v", err)
 	}
 
 	columns, err := repo.FetchMappedProjectColumns(project)
 
 	if err != nil {
-		log.Printf("An error occurred: %v", err)
-		return err
+		return fmt.Errorf("Failed to fetch project columns: %v", err)
 	}
 
 	for _, task := range setup.Tasks {
@@ -180,8 +177,7 @@ func (client *WorkflowClient) executeWorkload(creds *Credentials, setup *SetupSc
 		issue, err := repo.CreateOrUpdateIssue(&task.Assignee.GithubUsername, &task.Title, &task.Description, milestone.GetNumber())
 
 		if err != nil {
-			log.Printf("Error creating issue: %v", err)
-			return err
+			return fmt.Errorf("Failed to create issue: %v", err)
 		}
 
 		// NOTE: this fails with HTTP 422 when the the issue already has a card in the project.
@@ -203,10 +199,12 @@ func PerformWorkload(creds *Credentials, setup *SetupScheme) error {
 	return creds.Login(func(client *github.Client, ctx *context.Context) error {
 		workflow := WorkflowClient{*ctx, NewGitHubWrapper(client)}
 		emptyUser := "" // this will resolve the "current" user for this client context.
-		log.Printf("Performing workload as %v", workflow.resolveUser(&emptyUser).GetName())
+		log.Printf("Configuring tasks as %v", workflow.resolveUser(&emptyUser).GetName())
 		err := workflow.executeWorkload(creds, setup)
 		if err == nil {
-			log.Println("Completed workload processing.")
+			log.Println("Completed task configuration.")
+		} else {
+			log.Printf("Failed task configuration: %v", err)
 		}
 		return err
 	})
@@ -238,7 +236,7 @@ func (client *WorkflowClient) fetchRepository(service iGitHubRepositories, owner
 
 	repo, _, err := service.Get(client.Context, *owner, *name)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Failed fetchRepository(): %v", err)
 	}
 	return &WorkflowRepository{client.Client, client.Context, repo}, nil
 }
