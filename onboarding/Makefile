@@ -1,5 +1,5 @@
 
-PATH:="$(PATH):$(GOPATH)/bin/"
+PATH:="$(PATH):$(GOPATH)/bin/:`pwd`/go/bin/"
 
 all: lint test build
 
@@ -9,7 +9,7 @@ build: prepare_workload
 
 deps: 
 	go version
-	echo ${GOPATH}
+	@echo GOPATH IS ${GOPATH}
 	go get github.com/satori/go.uuid
 	go get -u -fix github.com/google/go-github/github
 	go get gopkg.in/yaml.v2
@@ -30,7 +30,6 @@ lint: deps
 	go get -u honnef.co/go/tools/cmd/gosimple
 	gofmt -w -s ./github/issues/
 	gofmt -w -s ./cmd/
-	pwd
 	$(GOPATH)/bin/goimports -w ./github/issues/
 	$(GOPATH)/bin/goimports -w ./cmd/
 	$(GOPATH)/bin/golint ./github/issues/
