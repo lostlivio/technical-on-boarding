@@ -8,10 +8,9 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"os"
 	"strconv"
 	"time"
-
-	"os"
 
 	"github.com/google/go-github/github"
 )

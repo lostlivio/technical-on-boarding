@@ -10,14 +10,11 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"net/http"
 
 	"github.com/google/go-github/github"
-
 	"golang.org/x/oauth2"
-
 	githuboauth "golang.org/x/oauth2/github"
-
-	"net/http"
 
 	"github.com/satori/go.uuid"
 )
