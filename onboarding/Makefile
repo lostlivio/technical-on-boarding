@@ -13,10 +13,15 @@ test:
 
 
 lint:
+	gofmt -w -s ./github/issues/
+	gofmt -w -s ./cmd/
+	goimports -w ./github/issues/
+	goimports -w ./cmd/
 	go get -u github.com/golang/lint/golint
 	go get honnef.co/go/tools/cmd/gosimple
 	golint ./github/issues/
 	golint ./cmd/
 	gosimple ./github/issues/
 	gosimple ./cmd/
+	
 
