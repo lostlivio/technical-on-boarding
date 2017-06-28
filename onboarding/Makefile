@@ -1,6 +1,8 @@
 
 PATH:="$(PATH):$(GOPATH)/bin/"
 
+all: lint test build
+
 
 prepare_workload: ./github/issues/*.go ./cmd/*.go
 	go build -v -o $@  github.com/samsung-cnct/technical-on-boarding/onboarding/cmd
@@ -8,7 +10,7 @@ prepare_workload: ./github/issues/*.go ./cmd/*.go
 build: prepare_workload
 
 test:
-	go test -v github.com/samsung-cnct/technical-on-boarding/onboarding/github/issues/
+	go test -v -cover github.com/samsung-cnct/technical-on-boarding/onboarding/github/issues/
 	go vet -v github.com/samsung-cnct/technical-on-boarding/onboarding/github/issues/
 
 
