@@ -21,7 +21,7 @@ To run this application, you need credentials for the `SDSA onboarding workflow`
 Please ping `@here` in the Slack channel `#team-tooltime` if you need these credentials.
 
 ```shell
-sh setup.sh  # installs dependencies, etc
+make deps    # installs dependencies, etc
 make test    # runs Golang unit tests/etc
 make build   # prepares an executable
 ./prepare_workload ./onboarding-issues.yaml  # executes the configured workload against GitHub

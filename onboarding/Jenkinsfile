@@ -1,21 +1,42 @@
-node('OnboardingWorkflow') {
 
-    stage('checkout') {
-        checkout scm
+
+podTemplate(label: 'OnboardingWorkflow', containers: [
+    containerTemplate(name: 'technical-on-boarding', image: 'docker.io/library/golang:1.8', ttyEnabled: true, command: 'cat', alwaysPullImage: true, resourceRequestMemory: '128Mi', resourceLimitMemory: '1Gi'),
+  ]){
+
+    node('OnboardingWorkflow') {
+        container ('technical-on-boarding') {
+            stage('checkout') {
+                checkout scm
+            }
+
+            stage('docker env setup') {
+                sh 'apt-get -qq update && apt-get -qq -y install build-essential'
+            }
+
+            stage('lint'){
+                sh 'make -C ./onboarding lint'
+            }
+
+            stage('dependencies'){
+                sh 'make -C ./onboarding deps'
+            }
+
+
+            stage('test'){
+                sh 'make -C ./onboarding test'
+            }
+
+
+            stage('build'){
+                sh 'make -C ./onboarding build'
+            }
+
+        }
+
+    
     }
-    stage('dependencies') {
-        sh 'go get go get github.com/satori/go.uuid'
-        sh 'go get github.com/google/go-github/github'
-        sh 'go get gopkg.in/yaml.v2'
-    }
-    stage('build'){
-        sh 'go build -v -o ./prepare_workload github.com/samsung-cnct/technical-on-boarding/onboarding/cmd'
-    }
-    stage('sanity check'){
-        sh 'go vet -v -x github.com/samsung-cnct/technical-on-boarding/onboarding/github/issues/'
-        sh 'go fmt -x github.com/samsung-cnct/technical-on-boarding/onboarding/github/issues/'
-    }
-    stage('test'){
-        sh 'go test -v -x github.com/samsung-cnct/technical-on-boarding/onboarding/github/issues/'
-    }
-}
+  }
+
+
+
