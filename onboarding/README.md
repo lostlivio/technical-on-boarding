@@ -24,8 +24,20 @@ Please ping `@here` in the Slack channel `#team-tooltime` if you need these cred
 make deps    # installs dependencies, etc
 make test    # runs Golang unit tests/etc
 make build   # prepares an executable
+export GITHUB_CLIENT_ID="{clientid}" \  # app credentials required
+    GITHUB_CLIENT_SECRET="{clientsecret}" \
+    GITHUB_REPO="technical-on-boarding"\
+    GITHUB_ORG="samsung-cnct" GITHUB_USER="YOUR_USER_NAME"
 ./prepare_workload ./onboarding-issues.yaml  # executes the configured workload against GitHub
 ```
+
+This will start a local HTTP server, at [127.0.0.1:7000](http://127.0.0.1:7000/). Open this URL
+in your browser, and log into GitHub _as yourself_. Once authenticated, the application will
+return you to the local web server, and set up the workload in a GitHub project. 
+
+The results of this application are logged to your terminal. 
+**TODO** Eventually we will render a status page to the browser with results of the application's workload.
+
 
 
 
