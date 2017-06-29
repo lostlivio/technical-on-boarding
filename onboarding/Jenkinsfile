@@ -24,15 +24,12 @@ podTemplate(label: 'OnboardingWorkflow', containers: [
                     kubesh 'apt-get -qq update && apt-get -qq -y install build-essential'
                 }
 
-                stage('lint'){
-                    kubesh 'pwd && ls -alh ./go/src/github.com/samsung-cnct/technical-on-boarding/ && make -C ./go/src/github.com/samsung-cnct/technical-on-boarding/onboarding lint'
-                }
-
                 stage('dependencies'){
-                    kubesh 'make -C ./go/src/github.com/samsung-cnct/technical-on-boarding/onboarding deps'
+                    kubesh 'make -C ./go/src/github.com/samsung-cnct/technical-on-boarding/onboarding setup'
                 }
 
-                stage('test'){
+
+                stage('test'){ // In the Makefile this provides `lint` and `vet` too.
                     kubesh 'make -C ./go/src/github.com/samsung-cnct/technical-on-boarding/onboarding test'
                 }
 
