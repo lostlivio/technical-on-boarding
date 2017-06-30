@@ -47,7 +47,7 @@ vet:
 	go vet -v github.com/samsung-cnct/technical-on-boarding/onboarding/github/issues/
 
 clean:
-	-rm ./coverage.* ./prepare_workload
+	-rm -vf ./coverage.* ./prepare_workload
 
 
 godoc.txt: $(shell find ./ -name '*.go')
