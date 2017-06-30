@@ -1,0 +1,4 @@
+*.priv
+prepare_workload
+temp/*
+coverage.*
