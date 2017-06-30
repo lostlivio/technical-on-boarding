@@ -1,8 +1,9 @@
 
 PATH:="$(PATH):$(GOPATH)/bin/:`pwd`/go/bin/"
+MODULES_PATH:="./github/issues/"
+COMMAND_PATH:="./cmd/"
 
 all: vet lint test build
-
 
 build: prepare_workload
 
@@ -18,14 +19,14 @@ setup:
 	go get golang.org/x/oauth2
 
 
-prepare_workload: setup ./github/issues/*.go ./cmd/*.go
-	go build -v -o $@  github.com/samsung-cnct/technical-on-boarding/onboarding/cmd
+prepare_workload: setup $(shell find $(MODULES_PATH) $(COMMAND_PATH) -name '*.go')
+	go build -v -o $@  $(COMMAND_PATH)
 
 test: setup vet lint
-	go test -race -v github.com/samsung-cnct/technical-on-boarding/onboarding/github/issues/
+	go test -race -v $(MODULES_PATH)
 	
-coverage.html: $(shell find ./ -name '*.go')
-	go test -covermode=count -coverprofile=coverage.prof github.com/samsung-cnct/technical-on-boarding/onboarding/github/issues/
+coverage.html: $(shell find $(MODULES_PATH) $(COMMAND_PATH) -name '*.go')
+	go test -covermode=count -coverprofile=coverage.prof $(MODULES_PATH)
 	go tool cover -html=coverage.prof -o $@
 
 test-cover: coverage.html
@@ -44,14 +45,14 @@ lint: setup
 	$(GOPATH)/bin/gosimple ./cmd/
 	
 vet: 
-	go vet -v github.com/samsung-cnct/technical-on-boarding/onboarding/github/issues/
+	go vet -v $(MODULES_PATH)
 
 clean:
 	-rm -vf ./coverage.* ./prepare_workload
 
 
 godoc.txt: $(shell find ./ -name '*.go')
-	godoc github.com/samsung-cnct/technical-on-boarding/onboarding/github/issues > $@
+	godoc $(MODULES_PATH) > $@
 
 docs:  godoc.txt
 
