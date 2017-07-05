@@ -1,6 +1,6 @@
 # Onboarding Workflow Template
 
-
+Please ensure that [Go is properly set up](./SETTINGUPGO.md) first.
 
 
 ## Goals
@@ -15,20 +15,25 @@
 - Creates Issues in GitHub to represent tasks, and links them to Milestone and Project.
 - Assigns those Issues to the new-hire.
 
+
 ## Usage
 
-To run this application, you need credentials for the `SDSA onboarding workflow` application. 
-Please ping `@here` in the Slack channel `#team-tooltime` if you need these credentials.
+To run this application, you need credentials for the `SDSA onboarding workflow` application. Please ping `@here` in the Slack channel `#team-tooltime` if you need these credentials.
 
 ```shell
-make deps    # installs dependencies, etc
+make setup   # installs dependencies, etc
 make test    # runs Golang unit tests/etc
 make build   # prepares an executable
-export GITHUB_CLIENT_ID="{clientid}" \  # app credentials required
+
+# app credentials required
+export GITHUB_CLIENT_ID="{clientid}" \ 
     GITHUB_CLIENT_SECRET="{clientsecret}" \
-    GITHUB_REPO="technical-on-boarding"\
-    GITHUB_ORG="samsung-cnct" GITHUB_USER="YOUR_USER_NAME"
-./prepare_workload ./onboarding-issues.yaml  # executes the configured workload against GitHub
+    GITHUB_REPO="technical-on-boarding" \
+    GITHUB_ORG="samsung-cnct" \
+    GITHUB_USER="YOUR_USER_NAME"
+
+# execute the configured workload against GitHub
+./prepare_workload ./onboarding-issues.yaml  
 ```
 
 This will start a local HTTP server, at [127.0.0.1:7000](http://127.0.0.1:7000/). Open this URL
