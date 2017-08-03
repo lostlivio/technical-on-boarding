@@ -19,16 +19,6 @@ tasks:
       3. Update the top section of the page, and add your name to the team member list.
       4. Familiarize yourself with [the wiki in general](https://hanjin.atlassian.net/wiki/).
 
-    
-  - title: Log assigned equipment/assets
-    assignee: *new_hire
-    description: |
-      Assets that need to be logged with model numbers and serial numbers include any monitors, laptops, and machines. (NUCS)
-
-      Mice, keyboards, and other periphery do not need to be logged.
-
-      See also: [Standard Developer Equipment Setup](https://hanjin.atlassian.net/wiki/display/AG/Standard+Developer+Equipment+Setup)
-  
   - title: Update the Team's Bio Blurbs
     assignee: *new_hire
     description: |
@@ -79,7 +69,6 @@ tasks:
       See also:
         - [Kubernetes Coding Conventions](https://github.com/kubernetes/community/blob/master/contributors/devel/coding-conventions.md)
 
-
   - title: Culture Lightning Talk
     assignee: *new_hire
     description: | 
@@ -89,4 +78,16 @@ tasks:
  
       You will present this to the whole team after general standup - please keep the talk between 4-5 minutes. 
 
-      Pick a date to present and schedule this with your manager. 
+      Procedure:
+        - Create presentation.
+        - Pick a date to present and schedule this with your manager.
+        - Record lightning talk via Zoom.
+        - [Store on team share](https://drive.google.com/drive/folders/0B8vQ_lXwx4cXVmVGZzlCOGFWZ0U)
+        - Link in your team bio entry in [confluence](https://hanjin.atlassian.net/wiki/display/AG/Team+Bio+Blurbs)
+
+  - title: Read additional CNCT development documents
+    assignee: *new_hire
+    description: |
+      - [ ] Read about [community meetins](https://github.com/samsung-cnct/docs/blob/master/cnct/community-meetings.md)
+      - [ ] Read about [github usage](https://github.com/samsung-cnct/docs/blob/master/cnct/github.md)
+      - [ ] Read about [slack usage](https://github.com/samsung-cnct/docs/blob/master/cnct/slack.md)

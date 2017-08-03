@@ -252,12 +252,12 @@ func TestFullWorkload(t *testing.T) {
 		GithubOrganization: "testOrganization",
 		GithubRepository:   "testRepository",
 		Tasks: []TaskEntry{
-			TaskEntry{Title: "test1", Description: "test", Assignee: indirectAssignee{GithubUsername: "test"}},
-			TaskEntry{Title: "test2", Description: "test", Assignee: indirectAssignee{GithubUsername: "test"}},
-			TaskEntry{Title: "test3", Description: "test", Assignee: indirectAssignee{GithubUsername: "test"}},
+			{Title: "test1", Description: "test", Assignee: indirectAssignee{GithubUsername: "test"}},
+			{Title: "test2", Description: "test", Assignee: indirectAssignee{GithubUsername: "test"}},
+			{Title: "test3", Description: "test", Assignee: indirectAssignee{GithubUsername: "test"}},
 		},
 		TaskOwners: map[string]indirectAssignee{
-			"new_hire": indirectAssignee{GithubUsername: "test"},
+			"new_hire": {GithubUsername: "test"},
 		},
 	}
 
