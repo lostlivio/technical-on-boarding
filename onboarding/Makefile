@@ -17,6 +17,7 @@ setup:
 	go get -u -fix github.com/google/go-github/github
 	go get gopkg.in/yaml.v2
 	go get golang.org/x/oauth2
+	go get github.com/revel/cmd/revel
 
 
 prepare_workload: setup $(shell find $(MODULES_PATH) $(COMMAND_PATH) -name '*.go')
