@@ -368,11 +368,9 @@ func (repo *WorkflowRepository) CreateOrUpdateIssue(assignee *string, title *str
 		return nil, err
 	}
 
-	if issuesFound != nil {
-		for _, issue := range issuesFound {
-			if issue != nil {
-				return issue, nil // found a matching issue
-			}
+	for _, issue := range issuesFound {
+		if issue != nil {
+			return issue, nil // found a matching issue
 		}
 	}
 
