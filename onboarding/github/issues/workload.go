@@ -8,7 +8,6 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"os"
 	"strconv"
 	"time"
 
@@ -119,10 +118,11 @@ func getMilestoneDueTime(fromTime *time.Time) time.Time {
 	return fromTime.AddDate(0, 0, 21+int(offset))
 }
 
+/*CLEANUP-CANDIDATE
 // LoadConfig prepares application context from configuration file
-func LoadConfig(filename string) (*Credentials, *SetupScheme, error) {
+func LoadConfig(filename string, environ *map[string]string) (*Credentials, *SetupScheme, error) {
 
-	workloadConfig, err := NewSetupScheme(filename)
+	workloadConfig, err := NewSetupScheme(filename, environ)
 
 	if err != nil {
 		return nil, nil, err
@@ -136,6 +136,7 @@ func LoadConfig(filename string) (*Credentials, *SetupScheme, error) {
 
 	return &creds, workloadConfig, nil
 }
+*/
 
 // process tasks from the setup scheme into client calls
 func (client *WorkflowClient) executeWorkload(creds *Credentials, setup *SetupScheme) error {
@@ -191,23 +192,6 @@ func (client *WorkflowClient) executeWorkload(creds *Credentials, setup *SetupSc
 	}
 
 	return nil
-}
-
-// PerformWorkload coordinates authentication and workload processing.
-func PerformWorkload(creds *Credentials, setup *SetupScheme) error {
-
-	return creds.Login(func(client *github.Client, ctx *context.Context) error {
-		workflow := WorkflowClient{*ctx, NewGitHubWrapper(client)}
-		emptyUser := "" // this will resolve the "current" user for this client context.
-		log.Printf("Configuring tasks as %v", workflow.resolveUser(&emptyUser).GetName())
-		err := workflow.executeWorkload(creds, setup)
-		if err == nil {
-			log.Println("Completed task configuration.")
-		} else {
-			log.Printf("Failed task configuration: %v", err)
-		}
-		return err
-	})
 }
 
 // NewGitHubWrapper provides a simple access API over specific attributes, to support interface compatibility.
@@ -710,23 +694,4 @@ func (repo *WorkflowRepository) ColumnsPresent(project *github.Project, columns 
 	}
 
 	return (countMissing < 1), nil
-}
-
-// Main is called by main() in related commandline tools.
-// Loads configuration and executes indicated workload.
-func Main() int {
-	configFilename := os.Args[1]
-	credentials, setup, err := LoadConfig(configFilename)
-	if err != nil {
-		log.Printf("Could not load configuration [%s], %v", configFilename, err)
-		return 1
-	}
-
-	err = PerformWorkload(credentials, setup)
-	if err != nil {
-		log.Printf("Error occurred from `credentials.Login(): %v`", err)
-		return 5
-	}
-
-	return 0
 }

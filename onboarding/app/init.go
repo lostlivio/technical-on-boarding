@@ -2,6 +2,7 @@ package app
 
 import (
 	"github.com/revel/revel"
+	onboarding "github.com/samsung-cnct/technical-on-boarding/onboarding/github/issues"
 )
 
 var (
@@ -11,8 +12,14 @@ var (
 	// BuildTime revel app build-time (ldflags)
 	BuildTime string
 
-	// AppConfigs for onboard app loaded from conf/app.conf. These are required at startup.
-	AppConfigs map[string]string
+	// Configs for onboard app loaded from conf/app.conf. These are required at startup.
+	Configs = make(map[string]string)
+
+	// AppSetup contains settings for the github workload job
+	Setup *onboarding.SetupScheme
+
+	// AppCredentials contains gitub app credentials
+	Credentials *onboarding.Credentials
 )
 
 func init() {
@@ -33,6 +40,8 @@ func init() {
 	}
 
 	revel.OnAppStart(LoadConfigs)
+	revel.OnAppStart(SetupScheme)
+	revel.OnAppStart(SetupCredentials)
 }
 
 var HeaderFilter = func(c *revel.Controller, fc []revel.Filter) {
@@ -53,17 +62,35 @@ const (
 )
 
 func LoadConfigs() {
-	AppConfigs := map[string]string{
-		OnboardClientIdName:     revel.Config.StringDefault(OnboardClientIdName, ""),
-		OnboardClientSecretName: revel.Config.StringDefault(OnboardClientSecretName, ""),
-		OnboardOrgName:          revel.Config.StringDefault(OnboardOrgName, ""),
-		OnboardRepoName:         revel.Config.StringDefault(OnboardRepoName, ""),
-		OnboardTasksFileName:    revel.Config.StringDefault(OnboardTasksFileName, ""),
-	}
+	Configs[OnboardClientIdName] = revel.Config.StringDefault(OnboardClientIdName, "")
+	Configs[OnboardClientSecretName] = revel.Config.StringDefault(OnboardClientSecretName, "")
+	Configs[OnboardOrgName] = revel.Config.StringDefault(OnboardOrgName, "")
+	Configs[OnboardRepoName] = revel.Config.StringDefault(OnboardRepoName, "")
+	Configs[OnboardTasksFileName] = revel.Config.StringDefault(OnboardTasksFileName, "")
 
-	for env, value := range AppConfigs {
+	for env, value := range Configs {
 		if len(value) == 0 {
 			revel.ERROR.Fatalf("The '%s' property is required on startup. check the conf/app.conf", env)
 		}
 	}
+	revel.INFO.Printf("Configs Loaded")
+}
+
+func SetupScheme() {
+	configFilename := Configs[OnboardTasksFileName]
+	setup, err := onboarding.NewSetupScheme(configFilename, &Configs)
+	if err != nil {
+		revel.ERROR.Fatalf("Cannat create an onboarding setup scheme: %v", err)
+	}
+	Setup = setup
+	revel.INFO.Printf("Scheme Setup")
+}
+
+func SetupCredentials() {
+	Credentials = &onboarding.Credentials{
+		ClientID:     Setup.ClientID,
+		ClientSecret: Setup.ClientSecret,
+		Scopes:       []string{"user", "repo", "issues", "milestones"},
+	}
+	revel.INFO.Printf("Credentials Setup")
 }
