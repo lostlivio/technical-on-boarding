@@ -8,10 +8,47 @@
 </div>
 
 <p>
-  Welcome {{.user.GithubUsername}}
+  Welcome {{.user.GithubUsername}}. Click <strong>Start</strong> button to start the project generation process.
 </p>
 
-
+<div id="events">
+  <script type="text/html" id="event_tmpl">
+    {{raw "<%"}} if(event.Type == 'start') { %>
+      <div class="alert alert-info">
+        <p>Starting workload: {{raw "<%"}}= event.Text %></p>
+      </div>
+    {{raw "<%"}} } %>
+    {{raw "<%"}} if(event.Type == 'progress') { %>
+      <div class="alert alert-info">
+        <p>Workload progress: {{raw "<%"}}= event.Text %></p>
+      </div>
+    {{raw "<%"}} } %>
+    {{raw "<%"}} if(event.Type == 'complete-success') { %>
+      <div class="alert alert-success">
+        <p>Successfully completed workload: {{raw "<%"}}= event.Text %></p>
+      </div>
+    {{raw "<%"}} } %>
+    {{raw "<%"}} if(event.Type == 'complete-fail') { %>
+      <div class="alert alert-danger">
+        <p>Workload did not complete successfully: {{raw "<%"}}= event.Text %></p>
+      </div>
+    {{raw "<%"}} } %>
+  </script>
 </div>
+</div>
+
+<script type="text/javascript">
+  var wsuri = 'ws://'+window.location.host+'/workload/socket'
+  var sock = new WebSocket(wsuri);
+
+  // Display a message
+  var display = function(event) {
+    $('#events').append(tmpl('event_tmpl', {event: event}));
+  }
+  // Message received on the socket
+  sock.onmessage = function(event) {
+    display(JSON.parse(event.data))
+  }
+</script>
 
 {{template "footer.html" .}}

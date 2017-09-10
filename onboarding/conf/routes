@@ -4,12 +4,13 @@
 #
 
 module:testrunner
-# module:jobs
+#module:jobs
 
 GET     /                                       App.Index
 GET     /auth                                   App.Auth
 GET     /authcb                                 App.AuthCallback
 GET     /workload                               App.Workload
+WS      /workload/socket                        App.WorkloadSocket
 
 # Ignore favicon requests
 GET     /favicon.ico                            404

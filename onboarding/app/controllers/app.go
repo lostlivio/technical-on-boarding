@@ -3,10 +3,13 @@ package controllers
 import (
 	"fmt"
 	"strconv"
+	"time"
 
 	"github.com/revel/revel"
 	"github.com/samsung-cnct/technical-on-boarding/onboarding/app"
+	"github.com/samsung-cnct/technical-on-boarding/onboarding/app/jobs"
 	"github.com/samsung-cnct/technical-on-boarding/onboarding/app/models"
+	"golang.org/x/net/websocket"
 )
 
 type App struct {
@@ -58,6 +61,7 @@ func (c App) AuthCallback() revel.Result {
 	return c.Redirect("/workload")
 }
 
+// Workload handles the initial workload page rendering
 func (c App) Workload() revel.Result {
 	user := c.currentUser()
 	if user == nil {
@@ -66,6 +70,66 @@ func (c App) Workload() revel.Result {
 	}
 
 	return c.Render(user)
+}
+
+// WorkloadSocket handles the websocket connection for workload events
+func (c App) WorkloadSocket(ws *websocket.Conn) revel.Result {
+	if ws == nil {
+		revel.ERROR.Printf("Websocket not intialized")
+		return nil
+	}
+	user := c.currentUser()
+	if user == nil {
+		revel.ERROR.Printf("User not setup correctly")
+		return c.Redirect("/")
+	}
+
+	// In order to select between websocket messages and subscription events, we
+	// need to stuff websocket events into a channel.
+	newMessages := make(chan string)
+	go func() {
+		var msg string
+		for {
+			err := websocket.Message.Receive(ws, &msg)
+			if err != nil {
+				close(newMessages)
+				return
+			}
+			newMessages <- msg
+		}
+	}()
+
+	// Emit fake events every 5 seconds
+	fakeEvents := make(chan jobs.Event)
+	go func() {
+		var cnt int
+
+		for {
+			cnt++
+			msg := fmt.Sprintf("fake event %d", cnt)
+			fakeEvents <- jobs.NewEvent(user.ID, "progress", msg)
+			time.Sleep(5 * time.Second)
+		}
+	}()
+
+	// Now listen for new events from either the websocket or the job.
+	for {
+		select {
+		case event := <-fakeEvents:
+			if websocket.JSON.Send(ws, &event) != nil {
+				// They disconnected.
+				return nil
+			}
+			revel.INFO.Printf("Sending event: %v", event)
+		case msg, ok := <-newMessages:
+			// If the channel is closed, they disconnected.
+			if !ok {
+				return nil
+			}
+
+			revel.INFO.Printf("Recieved: " + msg)
+		}
+	}
 }
 
 func (c App) currentUser() *models.User {
