@@ -1,6 +1,6 @@
 
 PATH:="$(PATH):$(GOPATH)/bin/:`pwd`/go/bin/"
-MODULES_PATH:="./github/issues/"
+MODULES_PATH:="./app/jobs/github/"
 COMMAND_PATH:="./cmd/"
 
 all: vet lint test build
@@ -36,17 +36,17 @@ lint: setup
 	go get -u github.com/golang/lint/golint
 	go get -u golang.org/x/tools/cmd/goimports
 	go get -u honnef.co/go/tools/cmd/gosimple
-	gofmt -w -s ./github/issues/
+	gofmt -w -s ./app/jobs/github/
 	gofmt -w -s ./cmd/
-	$(GOPATH)/bin/goimports -w ./github/issues/
+	$(GOPATH)/bin/goimports -w ./app/jobs/github/
 	$(GOPATH)/bin/goimports -w ./cmd/
-	$(GOPATH)/bin/golint ./github/issues/
+	$(GOPATH)/bin/golint ./app/jobs/github/
 	$(GOPATH)/bin/golint ./cmd/
-	$(GOPATH)/bin/gosimple ./github/issues/
+	$(GOPATH)/bin/gosimple ./app/jobs/github/
 	$(GOPATH)/bin/gosimple ./cmd/
 	
 vet: 
-	go vet -v $(MODULES_PATH)
+	go vet -v -printf=false $(MODULES_PATH)
 
 clean:
 	-rm -vf ./coverage.* ./prepare_workload

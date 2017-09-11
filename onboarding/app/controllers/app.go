@@ -3,11 +3,11 @@ package controllers
 import (
 	"fmt"
 	"strconv"
-	"time"
 
 	"github.com/revel/revel"
 	"github.com/samsung-cnct/technical-on-boarding/onboarding/app"
 	"github.com/samsung-cnct/technical-on-boarding/onboarding/app/jobs"
+	"github.com/samsung-cnct/technical-on-boarding/onboarding/app/jobs/github"
 	"github.com/samsung-cnct/technical-on-boarding/onboarding/app/models"
 	"golang.org/x/net/websocket"
 )
@@ -28,9 +28,9 @@ func (c App) Auth() revel.Result {
 		c.Session["uid"] = fmt.Sprintf("%d", user.ID)
 	}
 
-	user.AuthEnv = app.Credentials.NewAuthEnvironment()
-	authURL := user.AuthEnv.AuthCodeURL()
-	revel.INFO.Printf("authURL= %s", authURL)
+	auth := app.Credentials.NewAuthEnvironment()
+	authURL := auth.AuthCodeURL()
+	user.AuthEnv = auth
 	return c.Redirect(authURL)
 }
 
@@ -42,22 +42,23 @@ func (c App) AuthCallback() revel.Result {
 		return c.Redirect("/")
 	}
 
+	auth := user.AuthEnv
 	state := c.Params.Query.Get("state")
-	revel.INFO.Printf("DEBUG: AuthCallback state: %s", state)
-	userState := user.AuthEnv.StateString
+	userState := auth.StateString
 	if state != userState {
 		revel.ERROR.Printf("Invalid OAuth State, expected '%s', got '%s'\n", userState, state)
 		return c.Redirect("/")
 	}
 
 	code := c.Params.Query.Get("code")
-	revel.INFO.Printf("DEBUG: AuthCallback code: %s", code)
-	err := user.SetupUserAuth(code)
+	_, err := auth.SetupAccessToken(code)
 	if err != nil {
-		revel.ERROR.Printf("Could not setup user authentication: %v", err)
+		revel.ERROR.Printf("Could not get access token for user: %v", err)
 		return c.Redirect("/")
 	}
-	revel.INFO.Printf("Successfully authenticated Github user: %s\n", user.GithubUsername)
+	user.Username = auth.GithubUsername()
+
+	revel.INFO.Printf("Successfully authenticated Github user: %s\n", user.Username)
 	return c.Redirect("/workload")
 }
 
@@ -99,23 +100,24 @@ func (c App) WorkloadSocket(ws *websocket.Conn) revel.Result {
 		}
 	}()
 
-	// Emit fake events every 5 seconds
-	fakeEvents := make(chan jobs.Event)
-	go func() {
-		var cnt int
-
-		for {
-			cnt++
-			msg := fmt.Sprintf("fake event %d", cnt)
-			fakeEvents <- jobs.NewEvent(user.ID, "progress", msg)
-			time.Sleep(5 * time.Second)
-		}
-	}()
+	// setup and execute job
+	events := make(chan jobs.Event)
+	job := github.GenerateProject{
+		ID:      user.ID,
+		Setup:   app.Setup,
+		AuthEnv: user.AuthEnv,
+		New:     events,
+	}
+	jobs.StartJob(job)
 
 	// Now listen for new events from either the websocket or the job.
 	for {
 		select {
-		case event := <-fakeEvents:
+		case event, ok := <-events:
+			if !ok {
+				// Completed job events
+				return nil
+			}
 			if websocket.JSON.Send(ws, &event) != nil {
 				// They disconnected.
 				return nil
@@ -126,7 +128,6 @@ func (c App) WorkloadSocket(ws *websocket.Conn) revel.Result {
 			if !ok {
 				return nil
 			}
-
 			revel.INFO.Printf("Recieved: " + msg)
 		}
 	}

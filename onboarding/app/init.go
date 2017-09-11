@@ -2,7 +2,7 @@ package app
 
 import (
 	"github.com/revel/revel"
-	onboarding "github.com/samsung-cnct/technical-on-boarding/onboarding/github/issues"
+	"github.com/samsung-cnct/technical-on-boarding/onboarding/app/jobs/github"
 )
 
 var (
@@ -16,10 +16,10 @@ var (
 	Configs = make(map[string]string)
 
 	// AppSetup contains settings for the github workload job
-	Setup *onboarding.SetupScheme
+	Setup *github.SetupScheme
 
 	// AppCredentials contains gitub app credentials
-	Credentials *onboarding.Credentials
+	Credentials *github.Credentials
 )
 
 func init() {
@@ -78,16 +78,16 @@ func LoadConfigs() {
 
 func SetupScheme() {
 	configFilename := Configs[OnboardTasksFileName]
-	setup, err := onboarding.NewSetupScheme(configFilename, &Configs)
+	setup, err := github.NewSetupScheme(configFilename, &Configs)
 	if err != nil {
-		revel.ERROR.Fatalf("Cannat create an onboarding setup scheme: %v", err)
+		revel.ERROR.Fatalf("Cannat create an onboarding github setup scheme: %v", err)
 	}
 	Setup = setup
 	revel.INFO.Printf("Scheme Setup")
 }
 
 func SetupCredentials() {
-	Credentials = &onboarding.Credentials{
+	Credentials = &github.Credentials{
 		ClientID:     Setup.ClientID,
 		ClientSecret: Setup.ClientSecret,
 		Scopes:       []string{"user", "repo", "issues", "milestones"},

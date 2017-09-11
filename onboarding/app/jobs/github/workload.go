@@ -2,7 +2,7 @@
 This package implements some fairly thin wrappers over the GitHub client API, to allow them to be mocked for testing.
 */
 
-package onboarding
+package github
 
 import (
 	"context"
@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/google/go-github/github"
+	"github.com/samsung-cnct/technical-on-boarding/onboarding/app/jobs"
 )
 
 type (
@@ -118,80 +119,76 @@ func getMilestoneDueTime(fromTime *time.Time) time.Time {
 	return fromTime.AddDate(0, 0, 21+int(offset))
 }
 
-/*CLEANUP-CANDIDATE
-// LoadConfig prepares application context from configuration file
-func LoadConfig(filename string, environ *map[string]string) (*Credentials, *SetupScheme, error) {
-
-	workloadConfig, err := NewSetupScheme(filename, environ)
-
-	if err != nil {
-		return nil, nil, err
-	}
-
-	creds := Credentials{
-		ClientID:     workloadConfig.ClientID,
-		ClientSecret: workloadConfig.ClientSecret,
-		Scopes:       []string{"user", "repo", "issues", "milestones"},
-	}
-
-	return &creds, workloadConfig, nil
+// GenerateProject represents a Job to be executed by the revel job module.
+// See -> https://revel.github.io/modules/jobs.html#implementing-jobs
+type GenerateProject struct {
+	ID      int
+	Setup   *SetupScheme
+	AuthEnv *AuthEnvironment
+	New     chan<- jobs.Event
 }
-*/
 
-// process tasks from the setup scheme into client calls
-func (client *WorkflowClient) executeWorkload(creds *Credentials, setup *SetupScheme) error {
+// Run implements the required cron.Job interface for revel job execution
+func (job GenerateProject) Run() {
+	setup := job.Setup
+	auth := job.AuthEnv
+	username := auth.GithubUsername()
+	client, _ := auth.newWorkflowClient()
+
+	defer close(job.New)
+	job.New <- jobs.NewEvent(job.ID, "start", fmt.Sprintf("Starting project generation as %v", username))
 
 	repo, err := client.GetRepository(setup.GithubOrganization, setup.GithubRepository)
-
 	if err != nil {
-		return err
+		job.New <- jobs.NewError(job.ID, fmt.Sprintf("Failed to repository: %s", setup.GithubRepository), err)
+		return
 	}
 
-	username := setup.TaskOwners["new_hire"].GithubUsername
 	title := fmt.Sprintf("Welcome @%s!", username)
 	description := fmt.Sprintf("Let's setup up @%s for success. Here's what we need to cover...", username)
 	dueOn := getMilestoneDueTime(nil)
 
-	log.Printf("Creating Milestone: %s", title)
+	job.New <- jobs.NewEvent(job.ID, "progress", fmt.Sprintf("Creating Milestone: %s", title))
 	milestone, err := repo.CreateOrUpdateMilestone(&title, &description, &dueOn)
-
 	if err != nil {
-		return fmt.Errorf("Failed to create milestone: %v", err)
+		job.New <- jobs.NewError(job.ID, fmt.Sprintf("Failed to create milestone: %s", title), err)
+		return
 	}
 
-	log.Printf("Creating Project: %s", title)
+	job.New <- jobs.NewEvent(job.ID, "progress", fmt.Sprintf("Creating Project: %s", title))
 	project, err := repo.CreateOrUpdateProject(&title, &description, []string{"Backlog", "In Progress", "Review", "Done"})
-
 	if err != nil {
-		return fmt.Errorf("Failed to create project: %v", err)
+		job.New <- jobs.NewError(job.ID, fmt.Sprintf("Failed to create project: %s", title), err)
+		return
 	}
 
 	columns, err := repo.FetchMappedProjectColumns(project)
-
 	if err != nil {
-		return fmt.Errorf("Failed to fetch project columns: %v", err)
+		job.New <- jobs.NewError(job.ID, "Failed to fetch project columns", err)
+		return
 	}
 
 	for _, task := range setup.Tasks {
-
-		// log.Printf("Preparing Issue: %s", task.Title)
+		job.New <- jobs.NewEvent(job.ID, "progress", fmt.Sprintf("Preparing Issue: %s", task.Title))
 		issue, err := repo.CreateOrUpdateIssue(&task.Assignee.GithubUsername, &task.Title, &task.Description, milestone.GetNumber())
-
 		if err != nil {
-			return fmt.Errorf("Failed to create issue: %v", err)
+			job.New <- jobs.NewError(job.ID, fmt.Sprintf("Failed to create issue: %s", task.Title), err)
+			return
 		}
 
 		// NOTE: this fails with HTTP 422 when the the issue already has a card in the project.
 		_, err = repo.CreateCardForIssue(issue, columns["Backlog"])
-
 		if err != nil {
-			log.Printf("Error creating card: %v", err)
+			job.New <- jobs.NewError(job.ID, fmt.Sprintf("Error creating card: %v", err), err)
 			// DO NOT return here.
 		}
 
 	}
 
-	return nil
+	//https://github.com/alika/test-toby/projects
+	projectsURL := fmt.Sprintf("https://github.com/%s/%s/projects/", job.Setup.GithubOrganization, job.Setup.GithubRepository)
+	completed := fmt.Sprintf("Completed github project geneation successfully @ %s", projectsURL)
+	job.New <- jobs.NewEvent(job.ID, "complete", completed)
 }
 
 // NewGitHubWrapper provides a simple access API over specific attributes, to support interface compatibility.
