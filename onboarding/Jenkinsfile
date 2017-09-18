@@ -1,49 +1,55 @@
+// Configuration variables
+github_org             = "samsung-cnct"
+quay_org               = "samsung_cnct"
+publish_branch         = "master"
+image_tag              = "${env.RELEASE_VERSION}" != "null" ? "${env.RELEASE_VERSION}" : "latest"
+project_name           = "technical-on-boarding"
+
+dev_image_name         = "${project_name}:${env.JOB_BASE_NAME}.${env.BUILD_ID}"
+release_image_name     = "quay.io/${quay_org}/${project_name}:${image_tag}"
 
 
-podTemplate(label: 'OnboardingWorkflow', containers: [
-    containerTemplate(name: 'jnlp', image: 'quay.io/samsung_cnct/custom-jnlp:0.1', args: '${computer.jnlpmac} ${computer.name}'),
-    containerTemplate(name: 'technical-on-boarding', image: 'docker.io/library/golang:1.8', ttyEnabled: true, command: 'cat', alwaysPullImage: true, resourceRequestMemory: '128Mi', resourceLimitMemory: '1Gi')\
-  ]){
+podTemplate(label: "${project_name}", containers: [
+    containerTemplate(name: 'jnlp', image: "quay.io/${quay_org}/custom-jnlp:0.1", args: '${computer.jnlpmac} ${computer.name}'),
+    containerTemplate(name: 'goglide', image: "quay.io/${quay_org}/goglide:1.9.0", ttyEnabled: true, command: 'cat' ),
+    containerTemplate(name: 'docker', image: 'docker', command: 'cat', ttyEnabled: true)
+  ], volumes: [
+    hostPathVolume(hostPath: '/var/run/docker.sock', mountPath: '/var/run/docker.sock'),
+    hostPathVolume(hostPath: '/var/lib/docker/scratch', mountPath: '/mnt/scratch'),
+    secretVolume(mountPath: '/home/jenkins/.docker/', secretName: 'samsung-cnct-quay-robot-dockercfg')
+  ]) {
+    node("${project_name}") {
+      customContainer('docker') {
+        stage('Checkout') {
+          checkout scm
+          // retrieve the URI used for checking out the source
+          // this assumes one branch with one uri
+          git_uri = scm.getRepositories()[0].getURIs()[0].toString()
+          git_branch = scm.getBranches()[0].toString()
 
-    node('OnboardingWorkflow') {
-     
-
-        customContainer ('technical-on-boarding') {
-            stage('checkout') {
-                checkout scm
-
-                // Ugly hack. The code must live in a path compatible with Golang's layout, and be resolvable within Go apps via its full form ("github.com/samsung-cnct/...").
-                // There may be alternatives that allow it to run from local path, especially vendoring-in dependencies via glide.
-                // Performing the checkout to an explicit directory DID NOT work because it was somehow pulling `master` instead.
-                kubesh "mkdir -p go/src/github.com/samsung-cnct/technical-on-boarding/ && cp -r ./onboarding go/src/github.com/samsung-cnct/technical-on-boarding/onboarding"
-
-            }
-
-            withEnv(["GOPATH=${WORKSPACE}/go/", "CHECKOUT_PATH=./go/src/github.com/samsung-cnct/technical-on-boarding"]){
-                stage('docker env setup') {
-                    kubesh 'apt-get -qq update && apt-get -qq -y install build-essential'
-                }
-
-                stage('dependencies'){
-                    kubesh 'make -C ./go/src/github.com/samsung-cnct/technical-on-boarding/onboarding setup'
-                }
-
-
-                stage('test'){ // In the Makefile this provides `lint` and `vet` too.
-                    kubesh 'make -C ./go/src/github.com/samsung-cnct/technical-on-boarding/onboarding test'
-                }
-
-                stage('build'){
-                    kubesh 'make -C ./go/src/github.com/samsung-cnct/technical-on-boarding/onboarding build'
-                }
-            }
-
+          version = sh(script: 'cat ${WORKSPACE}/onboarding/VERSION', returnStdout: true).trim()
+          build   = sh(script: 'git rev-parse --short HEAD', returnStdout: true).trim()
         }
-      
+        withEnv(["VERSION=${version}", "BUILD=${build}"]) {
+          stage('Build') {
+            kubesh "docker build --build-arg VERSION=${version} --build-arg BUILD=${build} -t ${dev_image_name} onboarding"
+          }
+          stage('Test') {
+            kubesh "#TODO: add integration/smoke testing"
+          }
+          // only push from master.   check that we are on samsung-cnct fork
+          stage('Publish') {
+            if (git_branch.contains(publish_branch) && git_uri.contains(github_org)) {
+              kubesh "docker tag ${dev_image_name} ${release_image_name}"
+              kubesh "docker push ${release_image_name}"
+            } else {
+              echo "Not pushing ${release_image_name} to docker repo:\n    BRANCH_NAME='${env.BRANCH_NAME}'\n    GIT_BRANCH='${git_branch}'\n    git_uri='${git_uri}'"
+            }
+          }
+        }
+      }
     }
   }
-
-
 
 def kubesh(command) {
   if (env.CONTAINER_NAME) {
@@ -55,12 +61,11 @@ def kubesh(command) {
       command["script"] = kubectl(command["script"])
     }
   }
-
   sh(command)
 }
 
 def kubectl(command) {
-  "kubectl exec -i ${env.HOSTNAME} -c ${env.CONTAINER_NAME} -- /bin/sh -c 'cd ${env.WORKSPACE} && export GOPATH=${env.GOPATH} CHECKOUT_PATH=${env.CHECKOUT_PATH} && ${command}'"
+  "kubectl exec -i ${env.HOSTNAME} -c ${env.CONTAINER_NAME} -- /bin/sh -c 'cd ${env.WORKSPACE} && ${command}'"
 }
 
 def customContainer(String name, Closure body) {
@@ -68,3 +73,5 @@ def customContainer(String name, Closure body) {
     body()
   }
 }
+
+// vi: ft=groovy

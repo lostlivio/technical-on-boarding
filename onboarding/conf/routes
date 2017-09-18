@@ -7,6 +7,7 @@ module:testrunner
 #module:jobs
 
 GET     /                                       App.Index
+GET     /version                                App.Version
 GET     /auth                                   App.Auth
 GET     /authcb                                 App.AuthCallback
 GET     /workload                               App.Workload

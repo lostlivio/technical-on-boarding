@@ -16,6 +16,10 @@ type App struct {
 	*revel.Controller
 }
 
+func (c App) Version() revel.Result {
+	return c.RenderJSON(app.Version)
+}
+
 func (c App) Index() revel.Result {
 	return c.Render()
 }

@@ -1,13 +1,32 @@
 package app
 
 import (
+	"fmt"
+
+	"github.com/masterminds/semver"
 	"github.com/revel/revel"
 	"github.com/samsung-cnct/technical-on-boarding/onboarding/app/jobs/github"
 )
 
+type AppVersion struct {
+	Name     string          `json:"name"`
+	Version  string          `json:"version"`
+	Build    string          `json:"build"`
+	Semantic *semver.Version `json:"semantic"`
+}
+
 var (
-	// AppVersion revel app version (ldflags)
-	AppVersion string
+	// Version of the app
+	Version *AppVersion
+
+	// // SemanticVersion contains the parse semver
+	// SemanticVersion *semver.Version
+
+	// // Version revel app version (ldflags)
+	// Version string
+
+	// // Build revel app Build (ldflags)
+	// Build string
 
 	// BuildTime revel app build-time (ldflags)
 	BuildTime string
@@ -15,10 +34,10 @@ var (
 	// Configs for onboard app loaded from conf/app.conf. These are required at startup.
 	Configs = make(map[string]string)
 
-	// AppSetup contains settings for the github workload job
+	// Setup contains settings for the github workload job
 	Setup *github.SetupScheme
 
-	// AppCredentials contains gitub app credentials
+	// Credentials contains gitub app credentials
 	Credentials *github.Credentials
 )
 
@@ -39,6 +58,7 @@ func init() {
 		revel.ActionInvoker,           // Invoke the action.
 	}
 
+	revel.OnAppStart(SetupVersion)
 	revel.OnAppStart(LoadConfigs)
 	revel.OnAppStart(SetupScheme)
 	revel.OnAppStart(SetupCredentials)
@@ -60,6 +80,26 @@ const (
 	OnboardTasksFileName    string = "onboard.tasks.file"
 	OnboardUserName         string = "onboard.user"
 )
+
+func SetupVersion() {
+	name := revel.Config.StringDefault("app.name", "")
+	version := revel.Config.StringDefault("app.version", "")
+	build := revel.Config.StringDefault("app.build", "")
+	semVersionString := fmt.Sprintf("%s+%s", version, build)
+
+	semVersion, err := semver.NewVersion(semVersionString)
+	if err != nil {
+		revel.ERROR.Fatalf("Cannot setup semantic version: %v", err)
+	}
+
+	Version = &AppVersion{
+		Name:     name,
+		Version:  version,
+		Build:    build,
+		Semantic: semVersion,
+	}
+	revel.INFO.Printf("version setup: %v", Version)
+}
 
 func LoadConfigs() {
 	Configs[OnboardClientIdName] = revel.Config.StringDefault(OnboardClientIdName, "")

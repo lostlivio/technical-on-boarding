@@ -1,33 +1,53 @@
+# version info
+VERSION   ?= `cat VERSION`
+BUILD     ?= `git rev-parse HEAD`
+LDFLAGS=-ldflags "-X main.Version=${VERSION} -X main.Build=${BUILD}"
 
+# paths
 PATH:="$(PATH):$(GOPATH)/bin/:`pwd`/go/bin/"
-MODULES_PATH:="./app/jobs/github/"
-COMMAND_PATH:="./cmd/"
+APP_PATH:="./app/"
+CMD_PATH:="./cmd/"
+
+# naming
+PROJECT_NAME:=technical-on-boarding
+APP_NAME:="$(PROJECT_NAME)-app"
+CMD_NAME:="$(PROJECT_NAME)-cmd"
+
+PKG_NAME:="$(PROJECT_NAME)-v$(VERSION)"
+PKG_PATH:="github.com/samsung-cnct/technical-on-boarding/onboarding"
 
 all: vet lint test build
 
-build: prepare_workload
+build: $(PKG_NAME)
 
 # TODO: use glide to populate vendored dependencies
-
 
 setup: 
 	@go version
 	@echo GOPATH IS ${GOPATH}
+	@echo app.version is $(VERSION)+$(BUILD)
 	go get github.com/satori/go.uuid
 	go get -u -fix github.com/google/go-github/github
 	go get gopkg.in/yaml.v2
 	go get golang.org/x/oauth2
 	go get github.com/revel/cmd/revel
+	go get github.com/revel/revel
+	go get github.com/revel/cron
+	go get github.com/masterminds/semver
 
+$(PKG_NAME): $(APP_NAME) $(CMD_NAME)
 
-prepare_workload: setup $(shell find $(MODULES_PATH) $(COMMAND_PATH) -name '*.go')
-	go build -v -o $@  $(COMMAND_PATH)
+$(APP_NAME): #setup $(shell find $(APP_PATH) -name '*.go')
+	go build -v $(LDFLAGS) $(APP_PATH)
+
+$(CMD_NAME): setup $(shell find $(CMD_PATH) -name '*.go')
+	go build -v $(LDFLAGS) -o $@ $(CMD_PATH)
 
 test: setup vet lint
-	go test -race -v $(MODULES_PATH)
+	go test -race -v $(APP_PATH)jobs/github
 	
-coverage.html: $(shell find $(MODULES_PATH) $(COMMAND_PATH) -name '*.go')
-	go test -covermode=count -coverprofile=coverage.prof $(MODULES_PATH)
+coverage.html: $(shell find $(APP_PATH) $(CMD_PATH) -name '*.go')
+	go test -covermode=count -coverprofile=coverage.prof $(APP_PATH)
 	go tool cover -html=coverage.prof -o $@
 
 test-cover: coverage.html
@@ -44,18 +64,16 @@ lint: setup
 	$(GOPATH)/bin/golint ./cmd/
 	$(GOPATH)/bin/gosimple ./app/jobs/github/
 	$(GOPATH)/bin/gosimple ./cmd/
-	
+
 vet: 
-	go vet -v -printf=false $(MODULES_PATH)
+	go vet -v -printf=false $(APP_PATH)
 
 clean:
-	-rm -vf ./coverage.* ./prepare_workload
-
+	-rm -vf ./coverage.* ./$(CMD_NAME) ./$(APP_NAME) ./$(PKG_NAME)
 
 godoc.txt: $(shell find ./ -name '*.go')
-	godoc $(MODULES_PATH) > $@
+	godoc $(APP_PATH) > $@
 
 docs:  godoc.txt
-
 
 .PHONY: vet lint test test-cover setup clean docs

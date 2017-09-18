@@ -1,12 +1,18 @@
-FROM golang:1.8
+FROM golang:1.9
 
+ARG VERSION
+ARG BUILD 
 ENV PACKAGE_PATH "/go/src/github.com/samsung-cnct/technical-on-boarding/onboarding"
 ENV ONBOARD_TASKS_FILE "/workload/onboarding-issues.yaml"
 
 RUN apt-get -qq update && apt-get install -y -q build-essential
 
-WORKDIR "${PACKAGE_PATH}"
-COPY "./" "${PACKAGE_PATH}"
+WORKDIR ${PACKAGE_PATH}
+COPY . ${PACKAGE_PATH}
+
+# set version
+RUN sed -i -- 's/${VERSION}/'"$VERSION"'/g' conf/app.conf && \
+	  sed -i -- 's/${BUILD}/'"$BUILD"'/g' conf/app.conf
 
 RUN make all
 RUN mkdir /workload && \
