@@ -1,0 +1,9 @@
+Dockerfile
+Jenkinsfile
+Makefile.docker
+README.md
+.env
+docs
+scripts
+.DS_Store
+.vscode

@@ -8,25 +8,17 @@ import (
 	"github.com/samsung-cnct/technical-on-boarding/onboarding/app/jobs/github"
 )
 
-type AppVersion struct {
+// Version represents the application version
+type Version struct {
 	Name     string          `json:"name"`
-	Version  string          `json:"version"`
+	Number   string          `json:"number"`
 	Build    string          `json:"build"`
 	Semantic *semver.Version `json:"semantic"`
 }
 
 var (
-	// Version of the app
-	Version *AppVersion
-
-	// // SemanticVersion contains the parse semver
-	// SemanticVersion *semver.Version
-
-	// // Version revel app version (ldflags)
-	// Version string
-
-	// // Build revel app Build (ldflags)
-	// Build string
+	// SemanticVersion of app
+	SemanticVersion *Version
 
 	// BuildTime revel app build-time (ldflags)
 	BuildTime string
@@ -64,6 +56,7 @@ func init() {
 	revel.OnAppStart(SetupCredentials)
 }
 
+// HeaderFilter is used by the revel server
 var HeaderFilter = func(c *revel.Controller, fc []revel.Filter) {
 	c.Response.Out.Header().Add("X-Frame-Options", "SAMEORIGIN")
 	c.Response.Out.Header().Add("X-XSS-Protection", "1; mode=block")
@@ -73,7 +66,7 @@ var HeaderFilter = func(c *revel.Controller, fc []revel.Filter) {
 
 // Onboard specific configuration names
 const (
-	OnboardClientIdName     string = "onboard.client.id"
+	OnboardClientIDName     string = "onboard.client.id"
 	OnboardClientSecretName string = "onboard.client.secret"
 	OnboardOrgName          string = "onboard.org"
 	OnboardRepoName         string = "onboard.repo"
@@ -81,6 +74,7 @@ const (
 	OnboardUserName         string = "onboard.user"
 )
 
+// SetupVersion for revel web app from revel configs
 func SetupVersion() {
 	name := revel.Config.StringDefault("app.name", "")
 	version := revel.Config.StringDefault("app.version", "")
@@ -89,20 +83,21 @@ func SetupVersion() {
 
 	semVersion, err := semver.NewVersion(semVersionString)
 	if err != nil {
-		revel.ERROR.Fatalf("Cannot setup semantic version: %v", err)
+		revel.ERROR.Fatalf("Cannot setup semantic version of '%s': %v", semVersionString, err)
 	}
 
-	Version = &AppVersion{
+	SemanticVersion = &Version{
 		Name:     name,
-		Version:  version,
+		Number:   version,
 		Build:    build,
 		Semantic: semVersion,
 	}
-	revel.INFO.Printf("version setup: %v", Version)
+	revel.INFO.Printf("Semantic version setup: %v", SemanticVersion)
 }
 
+// LoadConfigs for onboarding workflow
 func LoadConfigs() {
-	Configs[OnboardClientIdName] = revel.Config.StringDefault(OnboardClientIdName, "")
+	Configs[OnboardClientIDName] = revel.Config.StringDefault(OnboardClientIDName, "")
 	Configs[OnboardClientSecretName] = revel.Config.StringDefault(OnboardClientSecretName, "")
 	Configs[OnboardOrgName] = revel.Config.StringDefault(OnboardOrgName, "")
 	Configs[OnboardRepoName] = revel.Config.StringDefault(OnboardRepoName, "")
@@ -116,6 +111,7 @@ func LoadConfigs() {
 	revel.INFO.Printf("Configs Loaded")
 }
 
+// SetupScheme for executing an onboarding workflow
 func SetupScheme() {
 	configFilename := Configs[OnboardTasksFileName]
 	setup, err := github.NewSetupScheme(configFilename, &Configs)
@@ -126,6 +122,7 @@ func SetupScheme() {
 	revel.INFO.Printf("Scheme Setup")
 }
 
+// SetupCredentials for github oauth2 authorization code grant workflow
 func SetupCredentials() {
 	Credentials = &github.Credentials{
 		ClientID:     Setup.ClientID,

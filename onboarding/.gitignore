@@ -4,4 +4,4 @@ temp/*
 coverage.*
 app/tmp/
 app/routes/
-app/test-results/
+test-results/

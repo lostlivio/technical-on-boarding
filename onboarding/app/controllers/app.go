@@ -12,14 +12,18 @@ import (
 	"golang.org/x/net/websocket"
 )
 
+// App for revel controller
 type App struct {
 	*revel.Controller
 }
 
+// Version endpoint to retrieve and serve app version.
+// Can be used for an application readiness check.
 func (c App) Version() revel.Result {
-	return c.RenderJSON(app.Version)
+	return c.RenderJSON(app.SemanticVersion)
 }
 
+// Index of web app
 func (c App) Index() revel.Result {
 	return c.Render()
 }

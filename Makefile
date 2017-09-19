@@ -1,20 +1,9 @@
-# version info
-VERSION   ?= `cat VERSION`
-BUILD     ?= `git rev-parse HEAD`
-LDFLAGS=-ldflags "-X main.Version=${VERSION} -X main.Build=${BUILD}"
+# import configuration variables
+include Makefile.env
+export $(shell sed -E 's/\??=.*//' Makefile.env)
 
-# paths
+LDFLAGS=-ldflags "-X main.Version=${PROJECT_VERSION} -X main.Build=${PROJECT_BUILD}"
 PATH:="$(PATH):$(GOPATH)/bin/:`pwd`/go/bin/"
-APP_PATH:="./app/"
-CMD_PATH:="./cmd/"
-
-# naming
-PROJECT_NAME:=technical-on-boarding
-APP_NAME:="$(PROJECT_NAME)-app"
-CMD_NAME:="$(PROJECT_NAME)-cmd"
-
-PKG_NAME:="$(PROJECT_NAME)-v$(VERSION)"
-PKG_PATH:="github.com/samsung-cnct/technical-on-boarding/onboarding"
 
 all: vet lint test build
 
@@ -25,7 +14,7 @@ build: $(PKG_NAME)
 setup: 
 	@go version
 	@echo GOPATH IS ${GOPATH}
-	@echo app.version is $(VERSION)+$(BUILD)
+	@echo app.version is $(PROJECT_VERSION)+$(PROJECT_BUILD)
 	go get github.com/satori/go.uuid
 	go get -u -fix github.com/google/go-github/github
 	go get gopkg.in/yaml.v2
@@ -56,20 +45,21 @@ lint: setup
 	go get -u github.com/golang/lint/golint
 	go get -u golang.org/x/tools/cmd/goimports
 	go get -u honnef.co/go/tools/cmd/gosimple
-	gofmt -w -s ./app/jobs/github/
-	gofmt -w -s ./cmd/
-	$(GOPATH)/bin/goimports -w ./app/jobs/github/
-	$(GOPATH)/bin/goimports -w ./cmd/
-	$(GOPATH)/bin/golint ./app/jobs/github/
-	$(GOPATH)/bin/golint ./cmd/
-	$(GOPATH)/bin/gosimple ./app/jobs/github/
-	$(GOPATH)/bin/gosimple ./cmd/
+	gofmt -w -s $(APP_PATH)
+	gofmt -w -s $(CMD_PATH)
+	$(GOPATH)/bin/goimports -w $(APP_PATH)
+	$(GOPATH)/bin/goimports -w $(CMD_PATH)
+	$(GOPATH)/bin/golint $(APP_PATH) $(APP_PATH)controllers $(APP_PATH)jobs $(APP_PATH)jobs/github
+	$(GOPATH)/bin/golint $(CMD_PATH)
+	$(GOPATH)/bin/gosimple $(APP_PATH)
+	$(GOPATH)/bin/gosimple $(CMD_PATH)
 
 vet: 
 	go vet -v -printf=false $(APP_PATH)
 
 clean:
-	-rm -vf ./coverage.* ./$(CMD_NAME) ./$(APP_NAME) ./$(PKG_NAME)
+	-rm -vf ./coverage.* ./$(CMD_NAME) ./$(APP_NAME)
+	-rm -rf ./test-results/
 
 godoc.txt: $(shell find ./ -name '*.go')
 	godoc $(APP_PATH) > $@
