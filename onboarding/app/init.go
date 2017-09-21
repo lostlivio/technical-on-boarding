@@ -5,7 +5,7 @@ import (
 
 	"github.com/masterminds/semver"
 	"github.com/revel/revel"
-	"github.com/samsung-cnct/technical-on-boarding/onboarding/app/jobs/github"
+	"github.com/samsung-cnct/technical-on-boarding/onboarding/app/jobs/onboarding"
 )
 
 // Version represents the application version
@@ -26,11 +26,11 @@ var (
 	// Configs for onboard app loaded from conf/app.conf. These are required at startup.
 	Configs = make(map[string]string)
 
-	// Setup contains settings for the github workload job
-	Setup *github.SetupScheme
+	// Setup contains settings for the onboarding github job
+	Setup *onboarding.SetupScheme
 
 	// Credentials contains gitub app credentials
-	Credentials *github.Credentials
+	Credentials *onboarding.Credentials
 )
 
 func init() {
@@ -114,7 +114,7 @@ func LoadConfigs() {
 // SetupScheme for executing an onboarding workflow
 func SetupScheme() {
 	configFilename := Configs[OnboardTasksFileName]
-	setup, err := github.NewSetupScheme(configFilename, &Configs)
+	setup, err := onboarding.NewSetupScheme(configFilename, &Configs)
 	if err != nil {
 		revel.ERROR.Fatalf("Cannat create an onboarding github setup scheme: %v", err)
 	}
@@ -124,7 +124,7 @@ func SetupScheme() {
 
 // SetupCredentials for github oauth2 authorization code grant workflow
 func SetupCredentials() {
-	Credentials = &github.Credentials{
+	Credentials = &onboarding.Credentials{
 		ClientID:     Setup.ClientID,
 		ClientSecret: Setup.ClientSecret,
 		Scopes:       []string{"user", "repo", "issues", "milestones"},

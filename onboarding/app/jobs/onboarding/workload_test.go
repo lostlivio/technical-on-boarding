@@ -1,4 +1,4 @@
-package github
+package onboarding
 
 /*
 This module's tests focus on exercising the `workload.go` module.

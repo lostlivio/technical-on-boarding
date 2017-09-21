@@ -3,14 +3,14 @@ package models
 import (
 	"math/rand"
 
-	"github.com/samsung-cnct/technical-on-boarding/onboarding/app/jobs/github"
+	"github.com/samsung-cnct/technical-on-boarding/onboarding/app/jobs/onboarding"
 )
 
 // User model object to manage user authentication
 type User struct {
 	ID       int
 	Username string
-	AuthEnv  *github.AuthEnvironment
+	AuthEnv  *onboarding.AuthEnvironment
 }
 
 var db = make(map[int]*User)

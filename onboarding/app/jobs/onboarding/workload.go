@@ -2,7 +2,7 @@
 This package implements some fairly thin wrappers over the GitHub client API, to allow them to be mocked for testing.
 */
 
-package github
+package onboarding
 
 import (
 	"context"

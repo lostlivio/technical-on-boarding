@@ -14,18 +14,24 @@ podTemplate(label: "technical-on-boarding", containers: [
           // this assumes one branch with one uri
           git_uri = scm.getRepositories()[0].getURIs()[0].toString()
           git_branch = scm.getBranches()[0].toString()
+          image_prod_tag = "${env.RELEASE_VERSION}" != "null" ? "${env.RELEASE_VERSION}" : "latest"
         }
-        stage('Setup') {
-          kubesh 'apk add --update --no-cache build-base git'
-        }
-        stage('Build') {
-          kubesh "make -f Makefile.docker IMAGE_DEVL_TAG=${env.JOB_BASE_NAME}.${env.BUILD_ID} build"
-        }
-        stage('Test') {
-          kubesh "make -f Makefile.docker IMAGE_DEVL_TAG=${env.JOB_BASE_NAME}.${env.BUILD_ID} test"
-        }
-        stage('Publish') {
-          kubesh "make -f Makefile.docker GITHUB_BRANCH=${git_branch} GITHUB_URI=${git_uri} IMAGE_DEVL_TAG=${env.JOB_BASE_NAME}.${env.BUILD_ID} IMAGE_PROD_TAG=${env.RELEASE_VERSION} publish"
+        withEnv(["IMAGE_DEVL_TAG=${env.JOB_BASE_NAME}.${env.BUILD_ID}", 
+                 "IMAGE_PROD_TAG=${image_prod_tag}",
+                 "GITHUB_BRANCH=${git_branch} ",
+                 "GITHUB_URI=${git_uri} "]){
+          stage('Setup') {
+            kubesh 'apk add --update --no-cache build-base git'
+          }
+          stage('Build') {
+            kubesh "make -e -f Makefile.docker build"
+          }
+          stage('Test') {
+            kubesh "make -e -f Makefile.docker test"
+          }
+          stage('Publish') {
+            kubesh "make -e -f Makefile.docker publish"
+          }
         }
       }
     }

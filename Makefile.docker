@@ -9,23 +9,23 @@ up: build run
 
 build:
 	docker build --force-rm \
-	   --build-arg VERSION=$(PROJECT_VERSION) \
-	   --build-arg BUILD=$(PROJECT_BUILD) \
+	   --build-arg VERSION=$(APP_VERSION) \
+	   --build-arg BUILD=$(APP_BUILD) \
 	   -t $(IMAGE_DEVL_NAME) .
 
-test:
+test: build
 	docker run --rm --env-file ./template.env \
 		 $(IMAGE_DEVL_NAME) \
-		 revel test $(PKG_PATH) dev
+		 revel test $(APP_PACKAGE) dev
 
 run:
 	docker run $(DOCKER_RUN_OPTS) $(IMAGE_DEVL_NAME) $(DOCKER_RUN_CMD)
 
 run-dev:
 	docker run $(DOCKER_RUN_OPTS) \
-	   -v $(PWD)/onboarding:/go/src/$(PKG_PATH) \
-		 -e VERSION=$(PROJECT_VERSION) \
-		 -e BUILD=$(PROJECT_BUILD) \
+	   -v $(PWD)/onboarding:/go/src/$(APP_PACKAGE) \
+		 -e VERSION=$(APP_VERSION) \
+		 -e BUILD=$(APP_BUILD) \
 	   $(IMAGE_DEVL_NAME) $(DOCKER_RUN_CMD)
 
 # only push from master. check that we are on samsung-cnct fork

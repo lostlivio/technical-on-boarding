@@ -7,7 +7,7 @@ import (
 	"github.com/revel/revel"
 	"github.com/samsung-cnct/technical-on-boarding/onboarding/app"
 	"github.com/samsung-cnct/technical-on-boarding/onboarding/app/jobs"
-	"github.com/samsung-cnct/technical-on-boarding/onboarding/app/jobs/github"
+	"github.com/samsung-cnct/technical-on-boarding/onboarding/app/jobs/onboarding"
 	"github.com/samsung-cnct/technical-on-boarding/onboarding/app/models"
 	"golang.org/x/net/websocket"
 )
@@ -93,7 +93,7 @@ func (c App) WorkloadSocket(ws *websocket.Conn) revel.Result {
 		return c.Redirect("/")
 	}
 
-	// In order to select between websocket messages and subscription events, we
+	// In order to select between websocket messages and job events, we
 	// need to stuff websocket events into a channel.
 	newMessages := make(chan string)
 	go func() {
@@ -110,7 +110,7 @@ func (c App) WorkloadSocket(ws *websocket.Conn) revel.Result {
 
 	// setup and execute job
 	events := make(chan jobs.Event)
-	job := github.GenerateProject{
+	job := onboarding.GenerateProject{
 		ID:      user.ID,
 		Setup:   app.Setup,
 		AuthEnv: user.AuthEnv,
