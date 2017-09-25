@@ -140,7 +140,7 @@ func (job GenerateProject) Run() {
 
 	repo, err := client.GetRepository(setup.GithubOrganization, setup.GithubRepository)
 	if err != nil {
-		job.New <- jobs.NewError(job.ID, fmt.Sprintf("Failed to repository: %s", setup.GithubRepository), err)
+		job.New <- jobs.NewError(job.ID, fmt.Sprintf("Failed to repository - %s", setup.GithubRepository), err)
 		return
 	}
 
@@ -148,17 +148,17 @@ func (job GenerateProject) Run() {
 	description := fmt.Sprintf("Let's setup up @%s for success. Here's what we need to cover...", username)
 	dueOn := getMilestoneDueTime(nil)
 
-	job.New <- jobs.NewEvent(job.ID, "progress", fmt.Sprintf("Creating Milestone: %s", title))
+	job.New <- jobs.NewEvent(job.ID, "progress", fmt.Sprintf("Creating Milestone - %s", title))
 	milestone, err := repo.CreateOrUpdateMilestone(&title, &description, &dueOn)
 	if err != nil {
-		job.New <- jobs.NewError(job.ID, fmt.Sprintf("Failed to create milestone: %s", title), err)
+		job.New <- jobs.NewError(job.ID, fmt.Sprintf("Failed to create milestone - %s", title), err)
 		return
 	}
 
-	job.New <- jobs.NewEvent(job.ID, "progress", fmt.Sprintf("Creating Project: %s", title))
+	job.New <- jobs.NewEvent(job.ID, "progress", fmt.Sprintf("Creating Project - %s", title))
 	project, err := repo.CreateOrUpdateProject(&title, &description, []string{"Backlog", "In Progress", "Review", "Done"})
 	if err != nil {
-		job.New <- jobs.NewError(job.ID, fmt.Sprintf("Failed to create project: %s", title), err)
+		job.New <- jobs.NewError(job.ID, fmt.Sprintf("Failed to create project - %s", title), err)
 		return
 	}
 
@@ -169,17 +169,17 @@ func (job GenerateProject) Run() {
 	}
 
 	for _, task := range setup.Tasks {
-		job.New <- jobs.NewEvent(job.ID, "progress", fmt.Sprintf("Preparing Issue: %s", task.Title))
+		job.New <- jobs.NewEvent(job.ID, "progress", fmt.Sprintf("Preparing Issue - %s", task.Title))
 		issue, err := repo.CreateOrUpdateIssue(&task.Assignee.GithubUsername, &task.Title, &task.Description, milestone.GetNumber())
 		if err != nil {
-			job.New <- jobs.NewError(job.ID, fmt.Sprintf("Failed to create issue: %s", task.Title), err)
+			job.New <- jobs.NewError(job.ID, fmt.Sprintf("Failed to create issue - %s", task.Title), err)
 			return
 		}
 
 		// NOTE: this fails with HTTP 422 when the the issue already has a card in the project.
 		_, err = repo.CreateCardForIssue(issue, columns["Backlog"])
 		if err != nil {
-			job.New <- jobs.NewError(job.ID, fmt.Sprintf("Error creating card: %v", err), err)
+			job.New <- jobs.NewError(job.ID, fmt.Sprintf("Error creating card - %v", err), err)
 			// DO NOT return here.
 		}
 

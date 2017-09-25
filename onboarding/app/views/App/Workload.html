@@ -12,23 +12,23 @@
 <div id="events">
   <script type="text/html" id="event_tmpl">
     {{raw "<%"}} if(event.Type == 'start') { %>
-      <div class="alert alert-info">
-        <p>Starting workload: {{raw "<%"}}= event.Text %></p>
+      <div class="alert alert-success">
+        <p>Starting: {{raw "<%"}}= event.Text %></p>
       </div>
     {{raw "<%"}} } %>
     {{raw "<%"}} if(event.Type == 'progress') { %>
       <div class="alert alert-info">
-        <p>Workload progress: {{raw "<%"}}= event.Text %></p>
+        <p>Progress: {{raw "<%"}}= event.Text %></p>
       </div>
     {{raw "<%"}} } %>
     {{raw "<%"}} if(event.Type == 'complete') { %>
       <div class="alert alert-success">
-        <p>Successfully completed workload: {{raw "<%"}}= event.Text %></p>
+        <p>Completed: {{raw "<%"}}= event.Text %></p>
       </div>
     {{raw "<%"}} } %>
     {{raw "<%"}} if(event.Type == 'error') { %>
       <div class="alert alert-danger">
-        <p>Workload did not complete successfully: {{raw "<%"}}= event.Text %></p>
+        <p>Error: {{raw "<%"}}= event.Text %></p>
       </div>
     {{raw "<%"}} } %>
   </script>
@@ -36,7 +36,7 @@
 </div>
 
 <script type="text/javascript">
-  var wsuri = 'ws://'+window.location.host+'/workload/socket'
+  var wsuri = ((window.location.protocol === "https:") ? "wss://" : "ws://") + window.location.host+'/workload/socket'
   var sock = new WebSocket(wsuri);
 
   // Display a message
