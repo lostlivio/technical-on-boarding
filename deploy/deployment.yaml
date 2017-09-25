@@ -1,0 +1,45 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: technical-on-boarding
+  namespace: technical-on-boarding
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: technical-on-boarding
+    spec:
+      containers:
+      - image: quay.io/samsung_cnct/technical-on-boarding:1.1.0 
+        imagePullPolicy: Always
+        name: technical-on-boarding
+        ports:
+        - containerPort: 9000
+        readinessProbe:
+          httpGet:
+            path: /version
+            port: 9000
+          initialDelaySeconds: 15
+          timeoutSeconds: 1
+        env:
+        - name: ONBOARD_CLIENT_ID
+          valueFrom:
+            secretKeyRef:
+              name: technical-on-boarding
+              key: ONBOARD_CLIENT_ID
+        - name: ONBOARD_CLIENT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: technical-on-boarding
+              key: ONBOARD_CLIENT_SECRET
+        - name: ONBOARD_ORG
+          valueFrom:
+            configMapKeyRef:
+              name: technical-on-boarding
+              key: ONBOARD_ORG
+        - name: ONBOARD_REPO
+          valueFrom:
+            configMapKeyRef:
+              name: technical-on-boarding
+              key: ONBOARD_REPO

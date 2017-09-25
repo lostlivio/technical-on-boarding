@@ -21,10 +21,14 @@ To run locally see the [Development and Testing](#development-and-testing) secti
 
 ### Running in Container
 
-Before you can run this you'll need to make an `.env` file that contains the credentials for the
-target Github repo in which the milestone/project/issue will be created. You can do this by copying 
-the provided template like so:
+Before you start you'll need:
 
+- Docker
+- Make
+- A local environment file
+
+To make an environment file that contains the Github client credentials you can copy the `template.env`
+file like so:
 ```shell
 cp template.env .env
 ```
@@ -93,6 +97,53 @@ interfaces and proxy methods in several other points to allow the business logic
 testing environment without reaching GitHub's API service.
 
 Per golang's convention, tests are found in files ending with `_test.go`.
+
+## Deployment
+
+This deployment assumes you have:
+
+- Access to a cluster w/an ingress controller already configured to use kube-lego.
+- Configured the `techncial-on-boarding.kubeme.io` domain to the above ingress controller.
+- `kubectl` installed locally
+
+To deploy to a kubernetes cluster execute the following:
+
+```shell
+# Create namespace
+kubectl create -f ../deploy/namespace.yaml
+
+# Set context to namespece
+kubectl config set-context common-tools --namespace=techncial-on-boarding
+
+# Create configuration
+kubectl create configmap technical-on-boarding --from-literal=ONBOARD_ORG=<github-org> --from-literal=ONBOARD_REPO=<github-repo>
+
+# Create secrets
+kubectl create secret generic technical-on-boarding --from-literal=ONBOARD_CLIENT_ID=<github-client-id> --from-literal=ONBOARD_CLIENT_SECRET=<github-client-secret>
+
+# Create service
+kubectl create -f ../deploy/service.yaml
+
+# Create deployment
+kubectl create -f ../deploy/deployment.yaml
+
+# Verify deployment
+kubectl get po
+kubectl port-forward <pod-from-above> 9000:9000
+curl localhost:9000/version
+
+# Create non-tls ingress
+kubectl apply -f ../deploy/ingress-notls.yaml
+
+# Verify non-tls access
+curl http://technical-on-boarding.kubeme.io/version
+
+# Create tls ingress
+kubectl apply -f ../deploy/ingress-tls.yaml
+
+# Vefify
+curl https://technical-on-boarding.kubeme.io/version
+```
 
 [2]: https://github.com/settings/applications/new
 [3]: https://github.com/settings/apps
