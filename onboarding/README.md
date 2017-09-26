@@ -147,8 +147,9 @@ curl https://technical-on-boarding.kubeme.io/version
 ### Updating
 To update the version of the app, execute the following:
 ```shell
-kubectl set image deploy/technical-on-boarding technical-on-boarding:quay.io/samsung_cnct/technical-on-boarding:1.1.1
+kubectl set image deploy/technical-on-boarding technical-on-boarding=quay.io/samsung_cnct/technical-on-boarding:<target-version>
 ```
+**NOTE:** Make sure to replace `<target-version>` with a valid version. You can check [here](https://quay.io/repository/samsung_cnct/technical-on-boarding?tab=tags)
 
 [2]: https://github.com/settings/applications/new
 [3]: https://github.com/settings/apps
