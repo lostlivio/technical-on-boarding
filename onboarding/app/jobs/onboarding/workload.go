@@ -140,7 +140,7 @@ func (job GenerateProject) Run() {
 
 	repo, err := client.GetRepository(setup.GithubOrganization, setup.GithubRepository)
 	if err != nil {
-		job.New <- jobs.NewError(job.ID, fmt.Sprintf("Failed to repository - %s", setup.GithubRepository), err)
+		job.New <- jobs.NewError(job.ID, fmt.Sprintf("Failed to repository - %s", setup.GithubRepository), err.Error())
 		return
 	}
 
@@ -151,20 +151,20 @@ func (job GenerateProject) Run() {
 	job.New <- jobs.NewEvent(job.ID, "progress", fmt.Sprintf("Creating Milestone - %s", title))
 	milestone, err := repo.CreateOrUpdateMilestone(&title, &description, &dueOn)
 	if err != nil {
-		job.New <- jobs.NewError(job.ID, fmt.Sprintf("Failed to create milestone - %s", title), err)
+		job.New <- jobs.NewError(job.ID, fmt.Sprintf("Failed to create milestone - %s", title), err.Error())
 		return
 	}
 
 	job.New <- jobs.NewEvent(job.ID, "progress", fmt.Sprintf("Creating Project - %s", title))
 	project, err := repo.CreateOrUpdateProject(&title, &description, []string{"Backlog", "In Progress", "Review", "Done"})
 	if err != nil {
-		job.New <- jobs.NewError(job.ID, fmt.Sprintf("Failed to create project - %s", title), err)
+		job.New <- jobs.NewError(job.ID, fmt.Sprintf("Failed to create project - %s", title), err.Error())
 		return
 	}
 
 	columns, err := repo.FetchMappedProjectColumns(project)
 	if err != nil {
-		job.New <- jobs.NewError(job.ID, "Failed to fetch project columns", err)
+		job.New <- jobs.NewError(job.ID, "Failed to fetch project columns", err.Error())
 		return
 	}
 
@@ -172,14 +172,14 @@ func (job GenerateProject) Run() {
 		job.New <- jobs.NewEvent(job.ID, "progress", fmt.Sprintf("Preparing Issue - %s", task.Title))
 		issue, err := repo.CreateOrUpdateIssue(&task.Assignee.GithubUsername, &task.Title, &task.Description, milestone.GetNumber())
 		if err != nil {
-			job.New <- jobs.NewError(job.ID, fmt.Sprintf("Failed to create issue - %s", task.Title), err)
+			job.New <- jobs.NewError(job.ID, fmt.Sprintf("Failed to create issue - %s", task.Title), err.Error())
 			return
 		}
 
 		// NOTE: this fails with HTTP 422 when the the issue already has a card in the project.
 		_, err = repo.CreateCardForIssue(issue, columns["Backlog"])
 		if err != nil {
-			job.New <- jobs.NewError(job.ID, fmt.Sprintf("Error creating card - %v", err), err)
+			job.New <- jobs.NewError(job.ID, fmt.Sprintf("Error creating card - %v", err), err.Error())
 			// DO NOT return here.
 		}
 
@@ -187,7 +187,7 @@ func (job GenerateProject) Run() {
 
 	//https://github.com/alika/test-toby/projects
 	projectsURL := fmt.Sprintf("https://github.com/%s/%s/projects/", job.Setup.GithubOrganization, job.Setup.GithubRepository)
-	completed := fmt.Sprintf("Completed github project geneation successfully @ %s", projectsURL)
+	completed := fmt.Sprintf("Successfully created project @ %s", projectsURL)
 	job.New <- jobs.NewEvent(job.ID, "complete", completed)
 }
 

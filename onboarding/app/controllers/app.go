@@ -124,13 +124,15 @@ func (c App) WorkloadSocket(ws *websocket.Conn) revel.Result {
 		case event, ok := <-events:
 			if !ok {
 				// Completed job events
-				return nil
-			}
-			if websocket.JSON.Send(ws, &event) != nil {
-				// They disconnected.
+				revel.INFO.Printf("The job has completed")
 				return nil
 			}
 			revel.INFO.Printf("Sending event: %v", event)
+			if websocket.JSON.Send(ws, &event) != nil {
+				// They disconnected.
+				revel.INFO.Printf("The user '%s' has disconnected", user.Username)
+				return nil
+			}
 		case msg, ok := <-newMessages:
 			// If the channel is closed, they disconnected.
 			if !ok {
