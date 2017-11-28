@@ -1,5 +1,3 @@
-
-
 githubOrganization: "{{ index .Environ "GITHUB_ORG" }}"
 githubRepository: "{{ index .Environ "GITHUB_REPO" }}"
 clientId: "{{ index .Environ "GITHUB_CLIENT_ID" }}"
@@ -8,7 +6,6 @@ clientSecret: "{{ index .Environ "GITHUB_CLIENT_SECRET" }}"
 task_owners: # The following will be referenced as assignees in GitHub
   new_hire: &new_hire # The newly hired staffmember who's in the process of onboarding.
     github_username: "{{ index .Environ "GITHUB_USER" }}"
-
 
 tasks:
   - title: Read Cloud Native Computing Team General Confluence Page

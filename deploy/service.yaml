@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: technical-on-boarding
+  namespace: technical-on-boarding
+spec:
+  ports:
+  - port: 80
+    targetPort: 9000
+    protocol: TCP
+  selector:
+    app: technical-on-boarding

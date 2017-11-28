@@ -6,11 +6,13 @@ It requires the GitHub Client mock/fixtures implemented in `github_client_test.g
 */
 
 import (
+	"fmt"
 	"log"
 	"testing"
 	"time"
 
 	"github.com/google/go-github/github"
+	"github.com/samsung-cnct/technical-on-boarding/onboarding/app/jobs"
 )
 
 // NOTE: This embodies an assumption of business process.
@@ -261,9 +263,21 @@ func TestFullWorkload(t *testing.T) {
 		},
 	}
 
-	err := client.executeWorkload(&creds, &setup)
+	events := make(chan jobs.Event)
+	job := GenerateProject{
+		ID:      42,
+		Setup:   &setup,
+		AuthEnv: &AuthEnvironment{workflowClient: client},
+		New:     events,
+	}
 
-	if err != nil {
-		log.Fatalf("Something broke in full workload. %v", err)
+	go job.Run()
+	for event := range events {
+		switch event.Text {
+		case "error":
+			log.Fatalf("Something broke in full workload. %v", event.Error)
+		default:
+			fmt.Println(event.Text)
+		}
 	}
 }

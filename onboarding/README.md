@@ -1,6 +1,4 @@
-# Onboarding Workflow Template
-
-
+# Technical Onboarding Workflow
 
 ## Goals
 
@@ -14,30 +12,44 @@
 - Creates Issues in GitHub to represent tasks, and links them to Milestone and Project.
 - Assigns those Issues to the new-hire.
 
-
 ## Usage
 
-To run this application, you need credentials for the `SDSA onboarding workflow` application. 
-Please ping `@here` in the Slack channel `#team-tooltime` if you need these credentials.
+This application is designed to be hosted and used [here](http://technical-on-boarding.kubeme.io).
+To run locally see the [Development and Testing](#development-and-testing) section below.
 
-The recommended approach is to execute this through Docker, like so:
+## Development and Testing
 
+### Running in Container
+
+Before you start you'll need:
+
+- Docker
+- Make
+- A local environment file
+
+To make an environment file that contains the Github client credentials you can copy the `template.env`
+file like so:
 ```shell
-docker build -t "samsung-cnct-onboarding:local" ./
-docker run --rm -it -p 7000:7000 \
-    -e 'GITHUB_CLIENT_ID={clientid}' \
-    -e 'GITHUB_CLIENT_SECRET={clientsecret}'\
-    -e 'GITHUB_ORG=samsung-cnct' -e 'GITHUB_REPO=technical-on-boarding'\
-    -e 'GITHUB_USER={your_github_username}'\
-    "samsung-cnct-onboarding:local"
+cp template.env .env
 ```
 
-This will start a local HTTP server, at [127.0.0.1:7000](http://127.0.0.1:7000/). Open this URL
-in your browser, and log into GitHub _as yourself_. Once authenticated, the application will
-return you to the local web server, and set up the workload in a GitHub project. 
+To build and run the application in a container execute the following:
 
-The results of this application are logged to your terminal. 
-**TODO** Eventually we will render a status page to the browser with results of the application's workload.
+```shell
+make -f Makefile.docker up
+```
+
+This will start a local HTTP server, at [127.0.0.1:9000](http://127.0.0.1:9000/). Open this URL
+in your browser, click the *Authorize* button, and log into GitHub _as yourself_. Once authenticated, 
+the application will direct you to the workload screen, start the task generateion job, and 
+provide progress on the job.
+
+To support [Revel's][4] _hot code reload_ in container, use the `run-dev` option to map 
+your working directory into the container like so:
+
+```shell
+make -f Makefile.docker run-dev
+```
 
 #### Alternate listening IP addresses.
 
@@ -54,7 +66,7 @@ Or potentially:
 docker run --net=host codenvy/che-ip 
 ```
 
-If either of the above indicate another IP address, try reaching that on port 7000.
+If either of the above indicate another IP address, try reaching that on port 9000.
 
 ### Running Locally (in your desktop)
 
@@ -63,24 +75,20 @@ rather than a preconfigured Docker container, here's how...
 
 Please ensure that [Go is properly set up](./SETTINGUPGO.md) first.
 
-
 ```shell
 make setup   # installs dependencies, etc
 make test    # runs Golang unit tests/etc
-make build   # prepares an executable
+make build   # prepares the web app
 
 # app credentials required
-export GITHUB_CLIENT_ID="{clientid}" \ 
-    GITHUB_CLIENT_SECRET="{clientsecret}" \
-    GITHUB_REPO="technical-on-boarding" \
-    GITHUB_ORG="samsung-cnct" \
-    GITHUB_USER="{your_github_username}"
-
-# execute the configured workload against GitHub
-./prepare_workload ./onboarding-issues.yaml  
+ONBOARD_CLIENT_ID="{clientid}" \ 
+    ONBOARD_CLIENT_SECRET="{clientsecret}" \
+    ONBOARD_REPO="technical-on-boarding" \
+    ONBOARD_ORG="samsung-cnct" \
+    VERSION="1.1.0" \
+    BUILD="local" \
+    revel run github.com/samsung-cnct/technical-on-boarding/onboarding
 ```
-
-## Development & Testing
 
 This workload relies heavily on the GitHub API, which also requires valid appliation tokens.
 
@@ -90,9 +98,59 @@ testing environment without reaching GitHub's API service.
 
 Per golang's convention, tests are found in files ending with `_test.go`.
 
+## Deployment
 
+This deployment assumes you have:
 
+- Access to a cluster w/an ingress controller already configured to use kube-lego.
+- Configured the `techncial-on-boarding.kubeme.io` domain to the above ingress controller.
+- `kubectl` installed locally
 
+To deploy to a kubernetes cluster execute the following:
+
+```shell
+# Create namespace
+kubectl create -f ../deploy/namespace.yaml
+
+# Set context to namespece
+kubectl config set-context common-tools --namespace=techncial-on-boarding
+
+# Create configuration
+kubectl create configmap technical-on-boarding --from-literal=ONBOARD_ORG=<github-org> --from-literal=ONBOARD_REPO=<github-repo>
+
+# Create secrets
+kubectl create secret generic technical-on-boarding --from-literal=ONBOARD_CLIENT_ID=<github-client-id> --from-literal=ONBOARD_CLIENT_SECRET=<github-client-secret>
+
+# Create service
+kubectl create -f ../deploy/service.yaml
+
+# Create deployment
+kubectl create -f ../deploy/deployment.yaml
+
+# Verify deployment
+kubectl get po
+kubectl port-forward <pod-from-above> 9000:9000
+curl localhost:9000/version
+
+# Create non-tls ingress
+kubectl apply -f ../deploy/ingress-notls.yaml
+
+# Verify non-tls access
+curl http://technical-on-boarding.kubeme.io/version
+
+# Create tls ingress
+kubectl apply -f ../deploy/ingress-tls.yaml
+
+# Vefify
+curl https://technical-on-boarding.kubeme.io/version
+```
+### Updating
+To update the version of the app, execute the following:
+```shell
+kubectl set image deploy/technical-on-boarding technical-on-boarding=quay.io/samsung_cnct/technical-on-boarding:<target-version>
+```
+**NOTE:** Make sure to replace `<target-version>` with a valid version. You can check [here](https://quay.io/repository/samsung_cnct/technical-on-boarding?tab=tags)
 
 [2]: https://github.com/settings/applications/new
 [3]: https://github.com/settings/apps
+[4]: https://revel.github.io/

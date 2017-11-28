@@ -2,11 +2,9 @@ package onboarding
 
 import (
 	"bytes"
-	"fmt"
 	"html/template"
 	"io/ioutil"
 	"log"
-	"os"
 
 	yaml "gopkg.in/yaml.v2"
 )
@@ -72,24 +70,9 @@ func (setup *SetupScheme) load(filename string, environ *map[string]string) erro
 }
 
 // NewSetupScheme constructs a SetupScheme instance, the combined effect of a template file and environment variables.
-func NewSetupScheme(filename string) (*SetupScheme, error) {
-
-	environ := map[string]string{
-		"GITHUB_CLIENT_ID":     os.Getenv("GITHUB_CLIENT_ID"),
-		"GITHUB_CLIENT_SECRET": os.Getenv("GITHUB_CLIENT_SECRET"),
-		"GITHUB_REPO":          os.Getenv("GITHUB_REPO"),
-		"GITHUB_ORG":           os.Getenv("GITHUB_ORG"),
-		"GITHUB_USER":          os.Getenv("GITHUB_USER"),
-	}
-
-	for env, value := range environ {
-		if len(value) == 0 {
-			return nil, (fmt.Errorf("Please define environment var %s", env))
-		}
-	}
-
+func NewSetupScheme(filename string, environ *map[string]string) (*SetupScheme, error) {
 	setup := SetupScheme{}
-	setup.load(filename, &environ)
+	setup.load(filename, environ)
 
 	return &setup, nil
 }
